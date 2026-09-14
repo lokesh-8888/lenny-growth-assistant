@@ -143,6 +143,67 @@ The transcripts are sourced from [`ChatPRD/lennys-podcast-transcripts`](https://
   - **Multi-turn Context**: Automatically includes recent session messages (up to `RAG_HISTORY_TURNS=6`) so contextual follow-ups ("Can you summarize his 4 points into a list?") work seamlessly.
   - **Auto-Persistence**: Sessions and both user and assistant messages with citations and provider tracking are automatically persisted to PostgreSQL.
 
+### Ship 30 for 30 Essay Generation (Phase 5)
+
+Generates viral, highly actionable, long-form growth essays adhering strictly to the **Ship 30 for 30** editorial framework, fully grounded in podcast transcript context and saved to the `artifacts` table.
+
+#### The 5 Editorial Pillars
+1. **Strong Opening Hook**: A compelling question, bold counter-intuitive claim, or vivid operator scenario.
+2. **Clear Narrative Arc**: Setup (the status quo / problem) $\rightarrow$ Tension / Core Insight (what high-growth leaders do differently) $\rightarrow$ Resolution (tactical implementation).
+3. **Skimmable Formatting**: Clean Markdown headings (`##`, `###`), structured bullet points / numbered steps, and selective **bolding** for rapid skimming.
+4. **One Central Restated Takeaway**: A dedicated concluding section summarizing the single most actionable rule of thumb.
+5. **Source Provenance**: Footnotes or inline attributions citing the specific guest name and podcast episode for every key insight.
+
+#### Endpoints
+- `POST /api/artifacts/generate`: Generate a new Ship 30/30 essay artifact from a conversation session:
+  ```json
+  // Request
+  {
+    "session_id": "56077338-9877-4f93-a57e-a942b7f7baf3",
+    "type": "ship30",
+    "title": "Mastering the Growth Competency Engine",
+    "source_message_id": null
+  }
+  ```
+  ```json
+  // Response
+  {
+    "id": "c6ca89cc-939c-42fa-83d8-342ecb14fbe9",
+    "session_id": "56077338-9877-4f93-a57e-a942b7f7baf3",
+    "type": "ship30",
+    "title": "Mastering the Growth Competency Engine",
+    "content": "## The Dangerous Trap of 'Generalist' Growth Hiring...\n\n...",
+    "word_count": 1245,
+    "validation": {
+      "word_count": 1245,
+      "target_word_count": 1250,
+      "word_count_valid": true,
+      "has_hook": true,
+      "has_headings": true,
+      "has_bullets": true,
+      "has_bold": true,
+      "has_takeaway": true,
+      "score": 1.0,
+      "issues": []
+    },
+    "citations": [
+      {
+        "guest": "Adam Fishman",
+        "episode_title": "How to build a high-performing growth team | Adam Fishman (Patreon, Lyft, Imperfect Foods)",
+        "source_url": "https://www.lennyspodcast.com/transcript"
+      }
+    ],
+    "created_at": "2026-09-14T19:51:39.081447Z"
+  }
+  ```
+- `GET /api/sessions/{session_id}/artifacts`: List all generated artifacts for a session.
+- `GET /api/artifacts/{artifact_id}`: Fetch single artifact by ID with on-the-fly validation metrics.
+
+#### Word Count & Programmatic Validation Guarantees
+- **Target Length**: ~1,250 words (configurable via `SHIP30_TARGET_WORD_COUNT`).
+- **Acceptable Range**: $\pm$20% tolerance (~1,000 to ~1,500 words, configurable via `SHIP30_WORD_COUNT_TOLERANCE`).
+- **Automated Refinement Pass**: If the initial generation deviates outside tolerance or lacks required structural elements (`##` headings, `**bolding**`, `- ` bullet points, or concluding takeaway), the engine executes an automated refinement pass through the LLM router to expand, trim, or reformat before returning.
+
 ---
 
 ## LLM Configuration & Zero-Downtime Fallback
@@ -162,7 +223,7 @@ The assistant incorporates a provider-agnostic LLM routing architecture:
 
 ## Running Automated Tests
 
-Run pytest across the entire test suite (data ingestion, chunker, health checks, and session persistence):
+Run pytest across the entire test suite (data ingestion, chunker, health checks, session persistence, RAG chat, and Ship 30 skill):
 ```bash
 pytest -v
 ```
@@ -172,6 +233,8 @@ Tests verify:
 2. **Ingestion Idempotency**: Verifies that re-running ingestion against unchanged transcripts inserts 0 new database records.
 3. **Session Lifecycle**: Create session -> add messages -> retrieve in chronological order -> cascade delete.
 4. **Health Check Resiliency**: Validates live checks and mocks for healthy, degraded, and database-down states.
+5. **Grounded RAG Guardrails**: Strict citation provenance, refusal on out-of-domain queries, and multi-turn context propagation.
+6. **Ship 30 for 30 Skill**: Editorial structure validation, word count boundary enforcement, programmatic refinement pass, and artifact persistence.
 
 ---
 
@@ -181,13 +244,23 @@ Tests verify:
 lenny-growth-assistant/
 ├── backend/
 │   ├── app/
-│   │   ├── config.py         # Pydantic settings
+│   │   ├── config.py         # Pydantic settings (inc. RAG & SHIP30 params)
 │   │   ├── database.py       # SQLAlchemy engine & session factory
 │   │   ├── models.py         # SQLAlchemy ORM models (sessions, messages, chunks, artifacts)
-│   │   ├── schemas.py        # Pydantic validation & serialization schemas
+│   │   ├── schemas.py        # Pydantic schemas (sessions, messages, rag, artifacts)
 │   │   ├── routers/
 │   │   │   ├── health.py     # Multi-component /health endpoint
-│   │   │   └── sessions.py   # Sessions & messages REST endpoints
+│   │   │   ├── sessions.py   # Sessions & messages REST endpoints
+│   │   │   ├── chat.py       # Grounded RAG chat endpoint
+│   │   │   ├── config.py     # LLM router introspection endpoint
+│   │   │   └── artifacts.py  # Artifact generation & retrieval endpoints
+│   │   ├── services/
+│   │   │   ├── llm/          # LLM router, Ollama, and cloud providers
+│   │   │   └── rag/          # Grounded retrieval, prompt builder, citations
+│   │   ├── skills/
+│   │   │   ├── __init__.py   # Skills module exports
+│   │   │   ├── base.py       # BaseSkill abstract interface
+│   │   │   └── ship30.py     # Ship 30 for 30 skill generator & validator
 │   │   └── main.py           # FastAPI entrypoint, CORS, exception handlers
 │   ├── db/
 │   │   ├── init.sql          # Postgres extension initialization
@@ -195,7 +268,9 @@ lenny-growth-assistant/
 │   ├── tests/
 │   │   ├── conftest.py       # Test fixtures and database setup
 │   │   ├── test_health.py    # Multi-component health check tests
-│   │   └── test_sessions.py  # Session & message persistence tests
+│   │   ├── test_sessions.py  # Session & message persistence tests
+│   │   ├── test_chat.py      # Grounded RAG chat endpoint tests
+│   │   └── test_ship30.py    # Ship 30 skill & artifact endpoint tests
 │   ├── Dockerfile            # Backend container definition
 │   └── requirements.txt      # Backend pinned dependencies
 ├── frontend/                 # React UI (Phase 7)
