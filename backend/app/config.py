@@ -39,6 +39,11 @@ class Settings(BaseSettings):
             return self.gemini_api_key
         return None
 
+    # RAG Retrieval Settings
+    rag_top_k: int = 6
+    rag_similarity_threshold: float = 0.40
+    rag_history_turns: int = 6
+
     # Server & Security
     backend_port: int = 8000
     cors_origins: List[str] = [
