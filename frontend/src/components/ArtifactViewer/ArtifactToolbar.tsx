@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   FileText,
   Sparkles,
+  X,
 } from 'lucide-react';
 
 export type ViewTab = 'rendered' | 'source';
@@ -24,6 +25,7 @@ interface ArtifactToolbarProps {
   onDownload: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
+  onClose?: () => void;
 }
 
 export const ArtifactToolbar: React.FC<ArtifactToolbarProps> = ({
@@ -36,6 +38,7 @@ export const ArtifactToolbar: React.FC<ArtifactToolbarProps> = ({
   onDownload,
   isFullscreen,
   onToggleFullscreen,
+  onClose,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -137,6 +140,18 @@ export const ArtifactToolbar: React.FC<ArtifactToolbarProps> = ({
         >
           {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </button>
+
+        {onClose && (
+          <button
+            className="toolbar-action-btn icon-only close-artifact-btn"
+            onClick={onClose}
+            title="Close viewer"
+            aria-label="Close artifact viewer"
+            data-testid="close-artifact-btn"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
     </div>
   );

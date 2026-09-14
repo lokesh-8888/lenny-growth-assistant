@@ -29,6 +29,7 @@ interface ArtifactViewerProps {
 export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
   artifact,
   className = '',
+  onClose,
 }) => {
 
   const [activeTab, setActiveTab] = useState<ViewTab>('rendered');
@@ -79,6 +80,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
         onDownload={handleDownload}
         isFullscreen={isFullscreen}
         onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+        onClose={onClose}
       />
 
       <div className="artifact-viewport">
