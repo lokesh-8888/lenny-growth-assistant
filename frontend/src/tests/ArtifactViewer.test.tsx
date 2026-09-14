@@ -83,4 +83,20 @@ describe('ArtifactViewer Component', () => {
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(mockMarkdownArtifact.content);
   });
+
+  it('handles download button click and initiates file download', () => {
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+    render(<ArtifactViewer artifact={mockMarkdownArtifact} />);
+
+    const downloadBtn = screen.getByRole('button', { name: /Download/i });
+    fireEvent.click(downloadBtn);
+
+    expect(createObjectURLSpy).toHaveBeenCalled();
+    expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:mock-url');
+
+    createObjectURLSpy.mockRestore();
+    revokeObjectURLSpy.mockRestore();
+  });
 });

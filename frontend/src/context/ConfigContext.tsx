@@ -10,7 +10,7 @@ interface ConfigContextValue {
   refreshConfig: () => Promise<void>;
 }
 
-const ConfigContext = createContext<ConfigContextValue | undefined>(undefined);
+export const ConfigContext = createContext<ConfigContextValue | undefined>(undefined);
 
 export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [config, setConfig] = useState<ConfigData | null>(null);

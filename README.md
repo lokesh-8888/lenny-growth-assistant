@@ -380,6 +380,75 @@ All 23 frontend unit, integration, and security verification tests pass:
 
 ---
 
+## Automated Tests & Manual Verification Plan (Phase 10)
+
+The project includes consolidated automated test suites across backend (Pytest) and frontend (Vitest / React Testing Library), along with an Evaluator Manual Test Plan for subjective flows.
+
+### 1. Single-Command Test Runner
+
+Execute both backend and frontend test suites consecutively with summary reporting:
+
+```powershell
+# Windows (PowerShell):
+.\scripts\run_tests.ps1
+```
+
+```bash
+# macOS / Linux / Git Bash:
+./scripts/run_tests.sh
+```
+
+### 2. Individual Test Suites
+
+#### Backend Pytest Suite (72 tests)
+Runs isolated unit and integration tests with zero external network dependencies:
+```bash
+.venv\Scripts\pytest -v          # Windows
+./.venv/bin/pytest -v            # macOS / Linux
+```
+- Multi-component `/health` check under healthy and degraded states.
+- Session CRUD, cascading deletes, and message ordering.
+- Cosine similarity ranking, keyword boosting, and threshold filtering.
+- LLM Router auto-fallback on HTTP 429 rate limit or timeout (`served_by: "ollama-fallback"`).
+- Grounded RAG chat citations and anti-hallucination refusal on out-of-scope queries.
+- Ship 30 essay structure and word count boundaries (~1,250 words ± 20%).
+- Markdown and HTML artifact generation with CSP meta tag injection.
+- Standardized error envelopes (503 on DB/Ollama outage, 422, 500) and `X-Request-ID` propagation.
+
+#### Frontend Vitest / RTL Suite (33 tests)
+Runs React component and security isolation tests:
+```bash
+cd frontend
+npm test -- --run
+```
+- Chat submission, assistant reply rendering, expandable citation toggles.
+- Session creation, switching, and deletion.
+- Artifact viewer tab switching (Rendered vs Raw), copy code to clipboard, file download triggers.
+- **Security Sandboxing**: Iframe strictly omits `allow-same-origin`, DOMPurify strips evil payloads, and CSP blocks external network exfiltration.
+- **Model Badges**: Telemetry display and `⚠️ Ollama Fallback` warning badge rendering.
+
+---
+
+### 3. Evaluator Manual Test Plan
+
+For subjective quality checks and browser sandbox verification, follow the comprehensive guide in [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md):
+
+1. **Grounded Retrieval vs. Out-of-Scope Refusal**:
+   - Query A (*"What is Shreyas Doshi's advice on customer obsession vs. customer empathy?"*): Returns grounded answer citing episode and guest.
+   - Query B (*"How do I design a nuclear propulsion engine in Rust?"*): Returns honest refusal (*"I couldn't find coverage of this topic..."*) with zero hallucinations.
+2. **Zero-Downtime Cloud Fallback**:
+   - Set `LLM_PROVIDER=cloud` with an invalid `CLOUD_LLM_API_KEY`.
+   - Submit a query: Request succeeds seamlessly via local Ollama, displaying the `⚠️ Ollama Fallback` warning badge in the UI.
+3. **Artifact Viewer Security Sandbox Escape Attempt**:
+   - Render an HTML artifact containing `<script>window.parent.document.title = 'Hacked';</script>` and `<script>fetch('https://evil.com')</script>`.
+   - Verify DevTools: Iframe runs in an opaque origin (`null`), blocking DOM parent access, and CSP directive `default-src 'none'` blocks network calls.
+4. **Ship 30 for 30 Essay Generation**:
+   - Click *"Turn into Ship 30 Essay"* on a growth query: Verifies Headline, Hook, Narrative, Bullets, and Takeaway structure with ~1,250 words and traceable citations.
+
+See [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) for full step-by-step instructions and DevTools inspection commands.
+
+---
+
 ## Project Structure
 
 ```
