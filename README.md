@@ -203,31 +203,29 @@ Generates viral, highly actionable, long-form growth essays adhering strictly to
 - `GET /api/sessions/{session_id}/artifacts`: List all generated artifacts for a session.
 - `GET /api/artifacts/{artifact_id}`: Fetch single artifact by ID with on-the-fly validation metrics.
 
-#### Sandboxed Artifact Viewer (Phase 6)
+#### Sandboxed Artifact Viewer & Dual-Pane UI (Phase 6 & 7)
 
-The React frontend includes an **Artifact Viewer** panel with dual-view tabs (Rendered vs. Raw Source):
-1. **Rendered View**:
-   - Renders interactive HTML in a strictly isolated `<iframe sandbox="allow-scripts">` with **no `allow-same-origin`**.
-   - Pre-sanitizes HTML via `DOMPurify` to eliminate remote script sources (`<script src="...">`).
-   - Injects mandatory restrictive Content Security Policy: `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline';">`.
-   - Renders Markdown and Ship 30 essays in styled typographic layouts with callouts and bold highlights.
-2. **Raw Source View**:
-   - Preformatted monospaced code view with one-click **Copy Source** and **Download (.html / .md)** buttons.
-
----
-
-## LLM Configuration & Zero-Downtime Fallback
-
-The assistant incorporates a provider-agnostic LLM routing architecture:
-1. **Local Mode (`LLM_PROVIDER=ollama`)**:
-   - Queries local Ollama instance on `http://localhost:11434` (model: `llama3.2:3b` or `llama3.1:8b`).
-   - Responses are tagged with `"served_by": "ollama"`.
-2. **Cloud Mode (`LLM_PROVIDER=cloud`)**:
-   - Routes requests to free-tier cloud providers via OpenAI-compatible endpoints (Groq `llama-3.3-70b-versatile` or Gemini `gemini-1.5-flash`).
-   - Responses are tagged with `"served_by": "groq"` or `"served_by": "gemini"`.
-3. **Resilient Auto-Fallback**:
-   - If the cloud provider encounters any failure (missing/invalid API key, 401 unauthenticated, 429 rate limit, 5xx server error, or network timeout), the `LLMRouter` catches the error, logs a structured warning, immediately dispatches the request to local Ollama, and tags the response with `"served_by": "ollama-fallback"`.
-   - The caller **never** receives an unhandled error due to cloud provider instability.
+The React frontend includes a responsive dual-pane workspace with seamless end-to-end user workflows:
+1. **Interactive Chat Stream**:
+   - Empty state hero with 4 curated operator starter queries (Adam Fishman competencies, Elena Verna loops, Cold start tactics, CAC payback benchmarks).
+   - Auto-resizing input box with Enter-to-send and Shift+Enter for multiline questions.
+   - Markdown rendering for assistant answers (lists, headings, bold callouts, blockquotes).
+   - **Collapsible Citations Section**: Displays grounded transcript sources, speaker names, episode titles, and links to transcripts.
+   - **Quick Action Toolbar**: One-click generation of Ship 30 Essays, Executive Briefs, or standalone HTML widgets directly below assistant answers.
+2. **Dual-Pane Sandboxed Artifact Viewer**:
+   - Mounts smoothly in the right pane alongside the conversation stream with **zero full-page reload**.
+   - **Rendered View**:
+     - Renders interactive HTML in a strictly isolated `<iframe sandbox="allow-scripts">` with **no `allow-same-origin`**.
+     - Pre-sanitizes HTML via `DOMPurify` to eliminate remote script sources (`<script src="...">`).
+     - Injects mandatory restrictive Content Security Policy: `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline';">`.
+     - Renders Markdown and Ship 30 essays in styled typographic layouts with callouts and bold highlights.
+   - **Raw Source View**:
+     - Preformatted monospaced code view with one-click **Copy Source** and **Download (.html / .md)** buttons.
+   - Expandable fullscreen mode or collapsible single-pane mode.
+3. **Telemetry & Resilience Transparency**:
+   - Header badge actively displays serving LLM (`Ollama: llama3.1:8b`).
+   - Dynamic health dot (`Healthy`, `Degraded`, `Offline`) polling `/health`.
+   - Real-time fallback warning banner when cloud rate limits trigger automatic routing to local Ollama.
 
 ---
 
@@ -241,22 +239,37 @@ pytest -v
 # Or using the local virtualenv:
 .venv\Scripts\pytest -v
 ```
+All 65 backend tests pass across ingestion, retrieval, health, chat, and artifact generation.
 
 ### Frontend Test Suite (Vitest)
-Run Vitest unit and security verification tests (sanitization, CSP enforcement, iframe sandbox boundaries, dual-view tabs):
+Run Vitest unit, security, and component tests:
 ```bash
 cd frontend
 npm test
 ```
-All 13 security and component tests run in JSDOM and verify that external script exfiltration and parent DOM tampering are blocked.
+All 23 frontend unit, integration, and security verification tests pass:
+- `sanitize.test.ts`: DOMPurify sanitization & script strip verification.
+- `SandboxedIframe.test.tsx`: Sandboxed iframe attributes (`allow-scripts` without `allow-same-origin`).
+- `security.test.tsx`: XSS prevention and CSP meta tag enforcement.
+- `SessionList.test.tsx`: Sessions list rendering, search filtering, "+ New Chat", and session deletion.
+- `ChatFlow.test.tsx`: Starter queries, chat message dispatch, citation cards, and fallback badges.
+- `ArtifactViewer.test.tsx`: Dual-view tabs (Rendered vs. Raw Source), copy to clipboard, and Markdown rendering.
+- `ArtifactAction.test.tsx`: Quick action buttons, artifact generation, and sandboxed viewer mount with zero page reload.
 
-Tests verify:
-1. **Chunking Accuracy**: Validates token boundaries (600–800 tokens), overlap (~100 tokens), and speaker turn parsing.
-2. **Ingestion Idempotency**: Verifies that re-running ingestion against unchanged transcripts inserts 0 new database records.
-3. **Session Lifecycle**: Create session -> add messages -> retrieve in chronological order -> cascade delete.
-4. **Health Check Resiliency**: Validates live checks and mocks for healthy, degraded, and database-down states.
-5. **Grounded RAG Guardrails**: Strict citation provenance, refusal on out-of-domain queries, and multi-turn context propagation.
-6. **Ship 30 for 30 Skill**: Editorial structure validation, word count boundary enforcement, programmatic refinement pass, and artifact persistence.
+---
+
+## Running the Frontend Locally (Phase 7)
+
+1. Start the backend on `http://localhost:8000`:
+   ```bash
+   uvicorn app.main:app --app-dir backend --reload --port 8000
+   ```
+2. In a separate terminal, start the Vite development server:
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+3. Open `http://localhost:5173` in your browser. All API requests (`/api/*`, `/health`) are automatically proxied to the backend.
 
 ---
 
