@@ -23,9 +23,9 @@ class SessionResponse(BaseModel):
     title: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    metadata: Dict[str, Any] = Field(default_factory=dict, alias="metadata_")
+    metadata: Dict[str, Any] = Field(default_factory=dict, validation_alias="metadata_")
 
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---------------------------------------------------------------------------

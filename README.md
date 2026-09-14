@@ -10,7 +10,7 @@ A local-first, zero-cost AI Growth and Product Assistant grounded in 260+ episod
 - **Embeddings**: Local Ollama running `nomic-embed-text` (768-dimensional embeddings, 100% free, no API key).
 - **LLM**: Local Ollama (`llama3.2:3b` or `qwen2.5:7b-instruct`) with optional free cloud fallback (Groq / Gemini free tiers).
 - **Knowledge Base**: Curated transcripts from [`ChatPRD/lennys-podcast-transcripts`](https://github.com/ChatPRD/lennys-podcast-transcripts) (269 Markdown transcripts with YAML frontmatter).
-- **Backend / Orchestration**: FastAPI (Python 3.11+) hand-rolled retrieval & persistence loop.
+- **Backend / Orchestration**: FastAPI (Python 3.11+) asynchronous API with SQLAlchemy persistence.
 
 ---
 
@@ -26,7 +26,7 @@ A local-first, zero-cost AI Growth and Product Assistant grounded in 260+ episod
 
 ---
 
-## Quickstart (Phase 1: Ingestion)
+## Quickstart
 
 ### 1. Configure Environment
 Copy the example environment file:
@@ -35,15 +35,21 @@ cp .env.example .env
 ```
 All defaults are configured for seamless local operation out of the box.
 
-### 2. Start PostgreSQL with pgvector
-Start the database container:
+### 2. Start Services via Docker Compose
+Start PostgreSQL (with `pgvector`) and the FastAPI backend:
+```bash
+docker compose up -d
+```
+- PostgreSQL is available at `localhost:5432`.
+- FastAPI Backend is available at `http://localhost:8000` (interactive Swagger docs at `http://localhost:8000/docs`).
+
+To run only the database service in Docker:
 ```bash
 docker compose up -d postgres
 ```
-This initializes PostgreSQL on port `5432` and runs `CREATE EXTENSION IF NOT EXISTS vector;` on first boot.
 
-### 3. Install Python Dependencies
-Create a virtual environment and install requirements:
+### 3. Local Backend Development (Standalone)
+If running the backend outside Docker for local iteration:
 ```bash
 python -m venv .venv
 # On Windows:
@@ -52,6 +58,9 @@ python -m venv .venv
 source .venv/bin/activate
 
 pip install -r requirements.txt
+
+# Start FastAPI server:
+uvicorn app.main:app --app-dir backend --reload --port 8000
 ```
 
 ### 4. Run Data Ingestion
@@ -72,15 +81,37 @@ The transcripts are sourced from [`ChatPRD/lennys-podcast-transcripts`](https://
 
 ---
 
+## API Endpoints (Phase 2)
+
+### Health Check
+- `GET /health`: Multi-component granular health status reporting:
+  - **PostgreSQL**: connection status and query latency in milliseconds (`latency_ms`).
+  - **Ollama**: reachability status and array of locally installed models (`models_available`).
+  - **Cloud LLM**: provider configuration status (`configured: true/false`, non-paid check).
+  - Overall status: `healthy` (200 OK), `degraded` (200 OK, e.g. Ollama unreachable), or `unhealthy` (503 Service Unavailable, DB disconnected).
+
+### Sessions & Persistence
+- `POST /api/sessions`: Create a new session with optional `title` and `metadata`.
+- `GET /api/sessions`: List all sessions ordered by `updated_at` descending.
+- `GET /api/sessions/{session_id}`: Retrieve single session metadata.
+- `DELETE /api/sessions/{session_id}`: Delete a session and cascade delete its messages and artifacts.
+- `GET /api/sessions/{session_id}/messages`: Fetch all messages for a session in chronological order (`created_at ASC`).
+- `POST /api/sessions/{session_id}/messages`: Append a message (`role`, `content`, optional `citations`, optional `served_by`).
+
+---
+
 ## Running Automated Tests
 
-Run pytest across the test suite:
+Run pytest across the entire test suite (data ingestion, chunker, health checks, and session persistence):
 ```bash
 pytest -v
 ```
+
 Tests verify:
 1. **Chunking Accuracy**: Validates token boundaries (600–800 tokens), overlap (~100 tokens), and speaker turn parsing.
-2. **Idempotency**: Verifies that re-running ingestion against unchanged transcripts inserts 0 new database records.
+2. **Ingestion Idempotency**: Verifies that re-running ingestion against unchanged transcripts inserts 0 new database records.
+3. **Session Lifecycle**: Create session -> add messages -> retrieve in chronological order -> cascade delete.
+4. **Health Check Resiliency**: Validates live checks and mocks for healthy, degraded, and database-down states.
 
 ---
 
@@ -89,9 +120,24 @@ Tests verify:
 ```
 lenny-growth-assistant/
 ├── backend/
-│   └── db/
-│       ├── init.sql          # Postgres extension initialization
-│       └── schema.sql        # Tables: chunks, sessions, messages, artifacts
+│   ├── app/
+│   │   ├── config.py         # Pydantic settings
+│   │   ├── database.py       # SQLAlchemy engine & session factory
+│   │   ├── models.py         # SQLAlchemy ORM models (sessions, messages, chunks, artifacts)
+│   │   ├── schemas.py        # Pydantic validation & serialization schemas
+│   │   ├── routers/
+│   │   │   ├── health.py     # Multi-component /health endpoint
+│   │   │   └── sessions.py   # Sessions & messages REST endpoints
+│   │   └── main.py           # FastAPI entrypoint, CORS, exception handlers
+│   ├── db/
+│   │   ├── init.sql          # Postgres extension initialization
+│   │   └── schema.sql        # Tables: chunks, sessions, messages, artifacts
+│   ├── tests/
+│   │   ├── conftest.py       # Test fixtures and database setup
+│   │   ├── test_health.py    # Multi-component health check tests
+│   │   └── test_sessions.py  # Session & message persistence tests
+│   ├── Dockerfile            # Backend container definition
+│   └── requirements.txt      # Backend pinned dependencies
 ├── frontend/                 # React UI (Phase 7)
 ├── scripts/
 │   ├── chunker.py            # Token-aware speaker & heading chunker
@@ -102,9 +148,9 @@ lenny-growth-assistant/
 ├── agent-transcripts/        # Verifiable agent session logs per phase
 ├── data/
 │   └── raw/                  # Downloaded raw transcripts (gitignored)
-├── docker-compose.yml        # Docker Compose configuration
+├── docker-compose.yml        # Multi-container orchestration (postgres, backend)
 ├── .env.example              # Sample environment configuration
-├── requirements.txt          # Pinned Python dependencies
+├── requirements.txt          # Root Python dependencies
 ├── pyproject.toml            # Project metadata and tool configuration
 ├── ROADMAP.md                # Project roadmap and architectural constraints
 ├── PRD.md                    # Product requirements document

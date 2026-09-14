@@ -20,6 +20,8 @@ dependencies = [
     "tiktoken==0.8.0",
     "python-dotenv==1.0.1",
     "tqdm==4.67.1",
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.34.0",
 ]
 
 [project.optional-dependencies]
@@ -29,10 +31,10 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "backend/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-pythonpath = ["."]
+pythonpath = [".", "backend"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
