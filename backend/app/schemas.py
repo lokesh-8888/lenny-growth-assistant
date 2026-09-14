@@ -91,3 +91,55 @@ class HealthResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     detail: str
+
+
+# ---------------------------------------------------------------------------
+# Artifact Schemas (Phase 5 & 6)
+# ---------------------------------------------------------------------------
+
+class ArtifactGenerateRequest(BaseModel):
+    session_id: UUID = Field(..., description="Active session ID providing conversation context")
+    type: str = Field(default="ship30", description="Artifact type: ship30, markdown, html")
+    title: Optional[str] = Field(default=None, max_length=255, description="Optional custom title")
+    source_message_id: Optional[UUID] = Field(
+        default=None, description="Optional specific message UUID to ground the artifact upon"
+    )
+
+
+class StructureValidation(BaseModel):
+    is_valid: bool = Field(..., description="Whether output meets structural and length criteria")
+    word_count: int = Field(..., description="Actual word count of generated content")
+    target_word_count: int = Field(default=1250, description="Target word count")
+    has_hook: bool = Field(default=True, description="Strong opening hook without throat-clearing")
+    has_headings: bool = Field(default=True, description="Contains markdown ## or ### headings")
+    has_bullets: bool = Field(default=True, description="Contains structured bullet or numbered list")
+    has_bold: bool = Field(default=True, description="Contains bold text for visual skimming")
+    has_takeaway: bool = Field(default=True, description="Contains dedicated takeaway section")
+    score: float = Field(default=1.0, ge=0.0, le=1.0, description="Composite structural score")
+    issues: List[str] = Field(default_factory=list, description="Any detected structural issues")
+
+
+class ArtifactResponse(BaseModel):
+    id: UUID
+    session_id: Optional[UUID] = None
+    type: str
+    title: str
+    content: str
+    word_count: int
+    validation: Optional[StructureValidation] = None
+    citations: List[Dict[str, Any]] = Field(default_factory=list)
+    served_by: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ArtifactListItem(BaseModel):
+    id: UUID
+    session_id: Optional[UUID] = None
+    type: str
+    title: str
+    word_count: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

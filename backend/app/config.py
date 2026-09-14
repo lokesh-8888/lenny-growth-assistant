@@ -59,6 +59,10 @@ class Settings(BaseSettings):
             else self.rag_similarity_threshold
         )
 
+    # Ship 30 for 30 Skill Configuration
+    ship30_target_word_count: int = 1250
+    ship30_word_count_tolerance: float = 0.20
+
     # Server & Security
     backend_port: int = 8000
     cors_origins: List[str] = [
