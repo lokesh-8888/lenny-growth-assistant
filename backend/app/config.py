@@ -72,6 +72,10 @@ class Settings(BaseSettings):
     ]
     app_env: str = "development"
 
+    # Observability & Logging
+    log_level: str = "INFO"
+    log_format: str = "json"  # "json" | "text"
+
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
