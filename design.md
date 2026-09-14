@@ -21,28 +21,68 @@ The Lenny Growth Assistant interface combines conversational AI search with an i
 
 ---
 
-## 3. Security Specification: Sandboxed Artifact Viewer
+## 3. UI/UX Principles & Dual-View Workspaces
 
-Generated HTML and scripts are treated as completely untrusted content. The artifact viewer employs defense-in-depth isolation:
+- **Operator-Grade Aesthetics**: Sleek dark mode (`#090d16` base, `#111827` surface), glassmorphic headers with `backdrop-filter: blur(12px)`, and system typography.
+- **Dual-View Tabs**: Seamless switching between high-fidelity Rendered view and raw syntax-highlighted source view without losing state or scrolling position.
+- **Micro-Interactions**: Instant visual feedback for copying source code, downloading `.html`/`.md` files, and toggling fullscreen view.
+- **Visual Provenance**: Footer citation pills linking assertions back to specific guests and episodes.
 
-### Permissions & Capabilities
-- **Permits**:
-  - Isolated script execution strictly within the sandboxed iframe for UI interactivity (e.g. interactive charts, tabs, filters).
-  - Inline CSS styles.
-  - Safe data URIs for inline imagery (`data:image/...`).
+---
 
-### Restrictions & Boundaries
-- **Blocks**:
-  - Network requests from within the artifact frame (no API calls, no analytics beacons).
-  - Access to parent page DOM, cookies, local storage, or session tokens.
-  - Same-origin privilege escalation (the iframe deliberately omits `allow-same-origin`).
-  - Loading external unverified scripts or stylesheets.
+## 4. Key Interaction States
 
-### Defense-in-Depth Layers
-1. **DOMPurify Sanitization**: All generated HTML is cleaned client-side prior to rendering, stripping dangerous attributes (`onload`, `<script src="...">`, event handlers).
-2. **Iframe Sandboxing**: Rendered via `<iframe sandbox="allow-scripts">` without `allow-same-origin`.
-3. **Content Security Policy (CSP)**: Generated documents inject a restrictive CSP meta tag:
-   ```html
-   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline';">
-   ```
-This guarantees that even a worst-case malicious payload cannot leak evaluator data or access host browser resources.
+1. **Initial / Empty State**: Helpful onboarding prompt inviting the user to ask a growth question.
+2. **Generating / Streaming State**: Smooth loading indicators and progress spinners.
+3. **Refined / Validated State**: Displaying artifact badges (`Ship 30 Essay`, `Executive Brief`, `Interactive HTML`) with word counts and security indicators.
+4. **Fallback Notice**: Visual indicator whenever responses are served via local fallback (`served_by: "ollama-fallback"`).
+
+---
+
+## 5. Information Architecture & Component Hierarchy
+
+```
+App
+├── Header (Brand Logo, Navigation, Artifact Type Filter Pills)
+└── ArtifactViewer
+    ├── ArtifactToolbar
+    │   ├── Left (Type Badge, Artifact Title, Word Count)
+    │   ├── Center (View Tabs: Rendered / Raw Source)
+    │   └── Right (Sandbox Security Indicator, Copy, Download, Fullscreen)
+    ├── Viewport
+    │   ├── Rendered Panel
+    │   │   ├── SandboxedIframe (for type="html")
+    │   │   └── MarkdownRenderer (for type="markdown" | "ship30")
+    │   └── Source Panel (<pre><code> with monospaced code)
+    └── Footer (Grounded Sources & Citation Badges)
+```
+
+---
+
+## 6. Security Specification: Sandboxed Artifact Viewer (Non-Negotiable §6)
+
+All generated HTML and client-side code are treated as **completely untrusted**. To protect the host application, parent DOM, authentication cookies, and evaluator data, the Artifact Viewer enforces an unbypassable three-layer defense:
+
+### What the Viewer Permits
+- **Isolated Script Execution**: The artifact's own scripts run exclusively inside an isolated frame to power interactive calculators (e.g. CAC/LTV sliders, growth loop simulators).
+- **Inline CSS**: Self-contained `<style>` blocks for rich, responsive UI styling.
+- **Data URIs**: Reading safe `data:image/...` URIs for inline charts and imagery.
+
+### What the Viewer Blocks
+- **External Network Requests**: Any `fetch()`, `XMLHttpRequest`, WebSocket, `navigator.sendBeacon()`, or external asset load is strictly blocked by CSP (`default-src 'none'`).
+- **Parent DOM & Cookie Access**: The iframe runs under an opaque/null origin because `allow-same-origin` is deliberately omitted. Any attempt to read `window.parent.document` or `window.parent.document.cookie` throws a cross-origin SecurityError.
+- **Parent Navigation & Frame Busting**: The iframe strictly omits `allow-top-navigation`, preventing any untrusted script from redirecting the parent window.
+- **External Script Inclusion**: DOMPurify pre-strips `<script src="...">` tags, guaranteeing that only audited inline code can exist.
+- **Form Submissions & Popups**: Deliberately omits `allow-forms` and `allow-popups` to block phishing or external window spawning.
+
+### Defense-in-Depth Matrix
+
+| Layer | Implementation | Security Boundary Enforced | Threat Mitigated |
+|---|---|---|---|
+| **Layer 1: Pre-Render Sanitization** | `DOMPurify.sanitize(...)` with custom filter in `frontend/src/utils/sanitize.ts` | Strips `<script src="...">`, `<iframe>`, `<object>`, `<embed>`, and `target="_top"`. | Prevents remote code execution (RCE) and external script harvesting. |
+| **Layer 2: Content Security Policy (CSP)** | `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline';">` injected into `<head>` | Blocks all outbound socket, HTTP, and beacon traffic. | Prevents data exfiltration and external beaconing. |
+| **Layer 3: Browser Iframe Sandboxing** | `<iframe sandbox="allow-scripts" srcdoc="...">` (strictly **no** `allow-same-origin`) | Enforces an opaque/unique origin (`null`). | Prevents parent DOM access, cookie theft, and localStorage tampering. |
+
+### Why This Is Enough
+The combination of sandbox attributes + restrictive CSP + pre-sanitization guarantees that a worst-case malicious payload can, at most, render broken content inside its own isolated frame. It cannot exfiltrate data, communicate over the network, or tamper with the parent application.
+

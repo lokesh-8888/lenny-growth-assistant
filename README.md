@@ -155,13 +155,17 @@ Generates viral, highly actionable, long-form growth essays adhering strictly to
 5. **Source Provenance**: Footnotes or inline attributions citing the specific guest name and podcast episode for every key insight.
 
 #### Endpoints
-- `POST /api/artifacts/generate`: Generate a new Ship 30/30 essay artifact from a conversation session:
+- `POST /api/artifacts/generate`: Generate a structured artifact from conversation context.
+  - Supported `type` options:
+    - `"ship30"`: Long-form growth essay (~1,250 words) adhering to the 5 Ship 30 pillars.
+    - `"markdown"`: Executive brief, teardown summary, or tactical implementation checklist.
+    - `"html"`: Complete standalone HTML document with embedded CSS and interactive JS widgets.
   ```json
   // Request
   {
     "session_id": "56077338-9877-4f93-a57e-a942b7f7baf3",
-    "type": "ship30",
-    "title": "Mastering the Growth Competency Engine",
+    "type": "html",
+    "title": "Interactive CAC Payback Simulator",
     "source_message_id": null
   }
   ```
@@ -170,14 +174,14 @@ Generates viral, highly actionable, long-form growth essays adhering strictly to
   {
     "id": "c6ca89cc-939c-42fa-83d8-342ecb14fbe9",
     "session_id": "56077338-9877-4f93-a57e-a942b7f7baf3",
-    "type": "ship30",
-    "title": "Mastering the Growth Competency Engine",
-    "content": "## The Dangerous Trap of 'Generalist' Growth Hiring...\n\n...",
-    "word_count": 1245,
+    "type": "html",
+    "title": "Interactive CAC Payback Simulator",
+    "content": "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline';\">...</head><body>...</body></html>",
+    "word_count": 350,
     "validation": {
-      "word_count": 1245,
-      "target_word_count": 1250,
-      "word_count_valid": true,
+      "is_valid": true,
+      "word_count": 350,
+      "target_word_count": 350,
       "has_hook": true,
       "has_headings": true,
       "has_bullets": true,
@@ -188,21 +192,27 @@ Generates viral, highly actionable, long-form growth essays adhering strictly to
     },
     "citations": [
       {
-        "guest": "Adam Fishman",
-        "episode_title": "How to build a high-performing growth team | Adam Fishman (Patreon, Lyft, Imperfect Foods)",
+        "guest": "Elena Verna",
+        "episode_title": "B2B Growth & Payback Period Benchmarks",
         "source_url": "https://www.lennyspodcast.com/transcript"
       }
     ],
-    "created_at": "2026-09-14T19:51:39.081447Z"
+    "created_at": "2026-09-15T01:50:00.000000Z"
   }
   ```
 - `GET /api/sessions/{session_id}/artifacts`: List all generated artifacts for a session.
 - `GET /api/artifacts/{artifact_id}`: Fetch single artifact by ID with on-the-fly validation metrics.
 
-#### Word Count & Programmatic Validation Guarantees
-- **Target Length**: ~1,250 words (configurable via `SHIP30_TARGET_WORD_COUNT`).
-- **Acceptable Range**: $\pm$20% tolerance (~1,000 to ~1,500 words, configurable via `SHIP30_WORD_COUNT_TOLERANCE`).
-- **Automated Refinement Pass**: If the initial generation deviates outside tolerance or lacks required structural elements (`##` headings, `**bolding**`, `- ` bullet points, or concluding takeaway), the engine executes an automated refinement pass through the LLM router to expand, trim, or reformat before returning.
+#### Sandboxed Artifact Viewer (Phase 6)
+
+The React frontend includes an **Artifact Viewer** panel with dual-view tabs (Rendered vs. Raw Source):
+1. **Rendered View**:
+   - Renders interactive HTML in a strictly isolated `<iframe sandbox="allow-scripts">` with **no `allow-same-origin`**.
+   - Pre-sanitizes HTML via `DOMPurify` to eliminate remote script sources (`<script src="...">`).
+   - Injects mandatory restrictive Content Security Policy: `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline';">`.
+   - Renders Markdown and Ship 30 essays in styled typographic layouts with callouts and bold highlights.
+2. **Raw Source View**:
+   - Preformatted monospaced code view with one-click **Copy Source** and **Download (.html / .md)** buttons.
 
 ---
 
@@ -210,7 +220,7 @@ Generates viral, highly actionable, long-form growth essays adhering strictly to
 
 The assistant incorporates a provider-agnostic LLM routing architecture:
 1. **Local Mode (`LLM_PROVIDER=ollama`)**:
-   - Queries local Ollama instance on `http://localhost:11434` (model: `llama3.2:3b`).
+   - Queries local Ollama instance on `http://localhost:11434` (model: `llama3.2:3b` or `llama3.1:8b`).
    - Responses are tagged with `"served_by": "ollama"`.
 2. **Cloud Mode (`LLM_PROVIDER=cloud`)**:
    - Routes requests to free-tier cloud providers via OpenAI-compatible endpoints (Groq `llama-3.3-70b-versatile` or Gemini `gemini-1.5-flash`).
@@ -223,10 +233,22 @@ The assistant incorporates a provider-agnostic LLM routing architecture:
 
 ## Running Automated Tests
 
-Run pytest across the entire test suite (data ingestion, chunker, health checks, session persistence, RAG chat, and Ship 30 skill):
+### Backend Test Suite (pytest)
+Run pytest across the entire backend test suite (ingestion, retrieval, health, sessions, RAG chat, Ship 30, and multi-type artifacts):
 ```bash
+# In project root:
 pytest -v
+# Or using the local virtualenv:
+.venv\Scripts\pytest -v
 ```
+
+### Frontend Test Suite (Vitest)
+Run Vitest unit and security verification tests (sanitization, CSP enforcement, iframe sandbox boundaries, dual-view tabs):
+```bash
+cd frontend
+npm test
+```
+All 13 security and component tests run in JSDOM and verify that external script exfiltration and parent DOM tampering are blocked.
 
 Tests verify:
 1. **Chunking Accuracy**: Validates token boundaries (600–800 tokens), overlap (~100 tokens), and speaker turn parsing.
