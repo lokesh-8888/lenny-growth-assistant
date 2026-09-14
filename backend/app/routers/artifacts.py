@@ -18,6 +18,8 @@ from app.schemas import (
     StructureValidation,
 )
 from app.skills.ship30 import Ship30Skill, get_ship30_skill
+from app.skills.markdown_brief import MarkdownBriefSkill, get_markdown_skill
+from app.skills.html_artifact import HtmlArtifactSkill, get_html_skill, ensure_csp_in_html
 
 router = APIRouter(tags=["Artifacts"])
 
@@ -26,7 +28,7 @@ router = APIRouter(tags=["Artifacts"])
     "/api/artifacts/generate",
     response_model=ArtifactResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Generate a structured artifact (Ship 30 essay) from session context",
+    summary="Generate a structured artifact (Ship 30 essay, Markdown brief, or HTML) from session context",
     responses={
         400: {"model": ErrorResponse, "description": "Invalid artifact type or missing context"},
         404: {"model": ErrorResponse, "description": "Session or source message not found"},
@@ -36,6 +38,8 @@ async def generate_artifact(
     payload: ArtifactGenerateRequest,
     db: Session = Depends(get_db),
     ship30_skill: Ship30Skill = Depends(get_ship30_skill),
+    markdown_skill: MarkdownBriefSkill = Depends(get_markdown_skill),
+    html_skill: HtmlArtifactSkill = Depends(get_html_skill),
 ):
     # 1. Verify session exists
     session = db.query(SessionModel).filter(SessionModel.id == payload.session_id).first()
@@ -90,16 +94,32 @@ async def generate_artifact(
 
     # 3. Route to requested skill
     artifact_type = payload.type.lower().strip()
+    topic = payload.title or session.title
+
     if artifact_type == "ship30":
         result = await ship30_skill.generate(
             context=context_str,
-            topic=payload.title or session.title,
+            topic=topic,
             citations=citations,
         )
+    elif artifact_type == "markdown":
+        result = await markdown_skill.generate(
+            context=context_str,
+            topic=topic,
+            citations=citations,
+        )
+    elif artifact_type == "html":
+        result = await html_skill.generate(
+            context=context_str,
+            topic=topic,
+            citations=citations,
+        )
+        # Enforce CSP tag in HTML before persistence
+        result["content"] = ensure_csp_in_html(result["content"])
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported artifact type: '{payload.type}'. Supported types in Phase 5: ['ship30']",
+            detail=f"Unsupported artifact type: '{payload.type}'. Supported types: ['ship30', 'markdown', 'html']",
         )
 
     # 4. Persist artifact record into database
@@ -125,6 +145,7 @@ async def generate_artifact(
         served_by=result.get("served_by"),
         created_at=artifact.created_at,
     )
+
 
 
 @router.get(
@@ -179,6 +200,8 @@ def get_artifact(
     artifact_id: UUID,
     db: Session = Depends(get_db),
     ship30_skill: Ship30Skill = Depends(get_ship30_skill),
+    markdown_skill: MarkdownBriefSkill = Depends(get_markdown_skill),
+    html_skill: HtmlArtifactSkill = Depends(get_html_skill),
 ):
     artifact = db.query(ArtifactModel).filter(ArtifactModel.id == artifact_id).first()
     if not artifact:
@@ -187,8 +210,13 @@ def get_artifact(
             detail=f"Artifact '{artifact_id}' not found",
         )
 
-    # Perform structural validation on retrieved content
-    validation = ship30_skill.validate(artifact.content)
+    # Perform structural validation on retrieved content according to artifact type
+    if artifact.type == "markdown":
+        validation = markdown_skill.validate(artifact.content)
+    elif artifact.type == "html":
+        validation = html_skill.validate(artifact.content)
+    else:
+        validation = ship30_skill.validate(artifact.content)
 
     return ArtifactResponse(
         id=artifact.id,
