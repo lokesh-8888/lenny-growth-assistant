@@ -10,11 +10,14 @@ from app.services.llm.base import (
     LLMRateLimitError,
     LLMTimeoutError,
 )
+from app.services.llm.cloud_provider import CloudProvider
+from app.services.llm.ollama_provider import OllamaProvider
 from app.services.llm.types import ChatMessage, ConfigResponse, LLMRequest, LLMResponse
 
 __all__ = [
     "BaseLLMProvider",
     "ChatMessage",
+    "CloudProvider",
     "ConfigResponse",
     "LLMAuthenticationError",
     "LLMConnectionError",
@@ -23,4 +26,5 @@ __all__ = [
     "LLMRequest",
     "LLMResponse",
     "LLMTimeoutError",
+    "OllamaProvider",
 ]
