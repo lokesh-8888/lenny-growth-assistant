@@ -227,19 +227,75 @@ The React frontend includes a responsive dual-pane workspace with seamless end-t
    - Dynamic health dot (`Healthy`, `Degraded`, `Offline`) polling `/health`.
    - Real-time fallback warning banner when cloud rate limits trigger automatic routing to local Ollama.
 
+### Observability, Structured Logging & Outage Resilience (Phase 8)
+
+The backend incorporates zero-cost, enterprise-grade structured observability and outage resilience:
+
+#### 1. Structured JSON Logging
+All backend logs are emitted as single-line JSON records to stdout (`LOG_FORMAT=json`):
+```json
+{
+  "timestamp": "2026-09-15T02:23:45Z",
+  "level": "INFO",
+  "logger": "app.services.rag.agent",
+  "message": "RAG completion finished (1162.5ms) served by ollama",
+  "request_id": "b3c6a7e2-4821-4b3f-9171-84197e889d12",
+  "session_id": "123e4567-e89b-12d3-a456-426614174000",
+  "event": "rag_completion_success",
+  "provider": "ollama",
+  "served_by": "ollama",
+  "model": "llama3.1:8b",
+  "retrieval_hits": 5,
+  "top_similarity_score": 0.8241,
+  "retrieval_latency_ms": 42.1,
+  "llm_latency_ms": 1120.4,
+  "total_latency_ms": 1162.5,
+  "is_grounded": true
+}
+```
+- Context variables (`contextvars`) automatically bind `request_id` and `session_id` to every asynchronous execution frame without manual parameter drilling.
+
+#### 2. Request Tracing Middleware
+- Injects or preserves `X-Request-ID` (UUID) across all logs and response headers.
+- Emits `X-Response-Time-Ms` showing total round-trip processing duration.
+- Emits structured `http_request_finished` logs with HTTP method, path, status, and latency.
+
+#### 3. Standardized Error Envelopes (Zero Stack Trace Leakage)
+The backend guarantees that raw stack traces, database credentials, and internal SQL statements are **never** leaked to clients:
+```json
+{
+  "error": {
+    "code": "DATABASE_UNAVAILABLE",
+    "message": "The database is currently unreachable. Please ensure the PostgreSQL container is running.",
+    "request_id": "b3c6a7e2-4821-4b3f-9171-84197e889d12",
+    "status_code": 503
+  },
+  "detail": "The database is currently unreachable. Please ensure the PostgreSQL container is running."
+}
+```
+
+| Error Code | HTTP Status | Trigger Condition | Operator Guidance |
+|---|---|---|---|
+| `DATABASE_UNAVAILABLE` | 503 | Postgres container offline or pool exhausted | Verify `docker compose up -d postgres` is healthy. |
+| `OLLAMA_UNAVAILABLE` | 503 | Ollama daemon offline on port 11434 | Run `ollama serve` or ensure Ollama is running locally. |
+| `INFERENCE_FAILED` | 502 | Both primary cloud and fallback Ollama fail | Check network connection or verify local model weights. |
+| `SESSION_NOT_FOUND` | 404 | Session UUID does not exist | Create a new session via `POST /api/sessions`. |
+| `VALIDATION_ERROR` | 422 | Invalid payload or missing fields | Check input format against Swagger documentation. |
+| `INTERNAL_SERVER_ERROR`| 500 | Unhandled internal exception | Stack trace logged internally with `request_id`; safe envelope returned to user. |
+
 ---
 
 ## Running Automated Tests
 
 ### Backend Test Suite (pytest)
-Run pytest across the entire backend test suite (ingestion, retrieval, health, sessions, RAG chat, Ship 30, and multi-type artifacts):
+Run pytest across the entire backend test suite (ingestion, retrieval, health, sessions, RAG chat, Ship 30, multi-type artifacts, and resilience):
 ```bash
 # In project root:
 pytest -v
 # Or using the local virtualenv:
 .venv\Scripts\pytest -v
 ```
-All 65 backend tests pass across ingestion, retrieval, health, chat, and artifact generation.
+All 72 backend tests pass across ingestion, retrieval, health, chat, artifacts, and outage resilience.
 
 ### Frontend Test Suite (Vitest)
 Run Vitest unit, security, and component tests:
