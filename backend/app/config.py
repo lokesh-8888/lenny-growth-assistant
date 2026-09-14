@@ -14,10 +14,30 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     embedding_model: str = "nomic-embed-text"
     llm_model: str = "llama3.2:3b"
+    ollama_model: str = "llama3.2:3b"
 
-    # Cloud LLM keys (optional toggles for later phases)
+    # LLM Router Settings
+    llm_provider: str = "ollama"  # "ollama" | "cloud"
+
+    # Cloud LLM Settings (free tiers: Groq or Gemini)
+    cloud_llm_provider: str = "groq"  # "groq" | "gemini"
+    cloud_llm_api_key: Optional[str] = None
+    cloud_llm_model: str = "llama-3.3-70b-versatile"
+    cloud_llm_base_url: Optional[str] = None
+
+    # Specific Provider Key Aliases
     groq_api_key: Optional[str] = None
     gemini_api_key: Optional[str] = None
+
+    @property
+    def resolved_cloud_api_key(self) -> Optional[str]:
+        if self.cloud_llm_api_key:
+            return self.cloud_llm_api_key
+        if self.cloud_llm_provider.lower() == "groq" and self.groq_api_key:
+            return self.groq_api_key
+        if self.cloud_llm_provider.lower() == "gemini" and self.gemini_api_key:
+            return self.gemini_api_key
+        return None
 
     # Server & Security
     backend_port: int = 8000
