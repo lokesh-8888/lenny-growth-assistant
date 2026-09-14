@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lenny-growth-assistant"
+version = "0.1.0"
+description = "A zero-cost, local-first growth and product AI assistant grounded in Lenny's Podcast transcripts."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "psycopg2-binary==2.9.10",
+    "pgvector==0.3.6",
+    "sqlalchemy==2.0.36",
+    "pydantic==2.10.4",
+    "pydantic-settings==2.7.1",
+    "pyyaml==6.0.2",
+    "python-frontmatter==1.1.0",
+    "httpx==0.28.1",
+    "tiktoken==0.8.0",
+    "python-dotenv==1.0.1",
+    "tqdm==4.67.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "pytest-asyncio==0.25.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
