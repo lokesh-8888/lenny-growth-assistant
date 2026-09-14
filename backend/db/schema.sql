@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS messages (
     role VARCHAR(20) NOT NULL,
     content TEXT NOT NULL,
     citations JSONB DEFAULT '[]'::jsonb,
+    served_by VARCHAR(50),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
