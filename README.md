@@ -98,6 +98,34 @@ The transcripts are sourced from [`ChatPRD/lennys-podcast-transcripts`](https://
 - `GET /api/sessions/{session_id}/messages`: Fetch all messages for a session in chronological order (`created_at ASC`).
 - `POST /api/sessions/{session_id}/messages`: Append a message (`role`, `content`, optional `citations`, optional `served_by`).
 
+### Configuration & LLM Routing (Phase 3)
+- `GET /api/config`: Introspect active LLM router status and available models:
+  ```json
+  {
+    "current_provider": "ollama",
+    "current_model": "llama3.2:3b",
+    "fallback_provider": "ollama",
+    "fallback_model": "llama3.2:3b",
+    "available_providers": ["ollama", "groq", "gemini"],
+    "cloud_configured": false
+  }
+  ```
+
+---
+
+## LLM Configuration & Zero-Downtime Fallback
+
+The assistant incorporates a provider-agnostic LLM routing architecture:
+1. **Local Mode (`LLM_PROVIDER=ollama`)**:
+   - Queries local Ollama instance on `http://localhost:11434` (model: `llama3.2:3b`).
+   - Responses are tagged with `"served_by": "ollama"`.
+2. **Cloud Mode (`LLM_PROVIDER=cloud`)**:
+   - Routes requests to free-tier cloud providers via OpenAI-compatible endpoints (Groq `llama-3.3-70b-versatile` or Gemini `gemini-1.5-flash`).
+   - Responses are tagged with `"served_by": "groq"` or `"served_by": "gemini"`.
+3. **Resilient Auto-Fallback**:
+   - If the cloud provider encounters any failure (missing/invalid API key, 401 unauthenticated, 429 rate limit, 5xx server error, or network timeout), the `LLMRouter` catches the error, logs a structured warning, immediately dispatches the request to local Ollama, and tags the response with `"served_by": "ollama-fallback"`.
+   - The caller **never** receives an unhandled error due to cloud provider instability.
+
 ---
 
 ## Running Automated Tests
