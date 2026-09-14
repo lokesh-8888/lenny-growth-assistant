@@ -17,6 +17,10 @@ class RetrievedChunk(BaseModel):
     similarity: float = 0.0
     distance: float = 1.0
 
+    @property
+    def similarity_score(self) -> float:
+        return self.similarity
+
 
 class Citation(BaseModel):
     episode_title: str

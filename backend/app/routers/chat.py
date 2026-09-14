@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.core.logging import set_session_id
 from app.database import get_db
 from app.models import MessageModel, SessionModel
 from app.schemas import ErrorResponse
@@ -47,6 +48,8 @@ async def chat_completion(
         db.add(session)
         db.commit()
         db.refresh(session)
+
+    set_session_id(str(session.id))
 
     # 2. Persist user question
     user_msg = MessageModel(

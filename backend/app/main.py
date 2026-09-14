@@ -2,13 +2,17 @@
 Main FastAPI Application entrypoint for The Lenny Growth Assistant.
 """
 
-from fastapi import FastAPI, HTTPException, Request, status
-from fastapi.exceptions import RequestValidationError
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.core.exceptions import register_exception_handlers
+from app.core.logging import setup_logging
+from app.middleware.trace import TraceMiddleware
 from app.routers import artifacts, chat, config, health, sessions
+
+# Initialize structured logging
+setup_logging()
 
 app = FastAPI(
     title="The Lenny Growth Assistant API",
@@ -17,8 +21,9 @@ app = FastAPI(
 )
 
 # ---------------------------------------------------------------------------
-# CORS Middleware
+# Tracing & CORS Middleware
 # ---------------------------------------------------------------------------
+app.add_middleware(TraceMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -27,32 +32,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # ---------------------------------------------------------------------------
 # Global Exception Handlers
 # ---------------------------------------------------------------------------
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail},
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": str(exc.errors())},
-    )
-
-
-@app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "An internal server error occurred."},
-    )
+register_exception_handlers(app)
 
 
 # ---------------------------------------------------------------------------
