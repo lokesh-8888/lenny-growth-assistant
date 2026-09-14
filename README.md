@@ -4,13 +4,31 @@ A local-first, zero-cost AI Growth and Product Assistant grounded in 260+ episod
 
 ---
 
-## Zero-Cost Stack
+## Zero-Cost Stack Matrix
 
-- **Storage**: PostgreSQL 16 with `pgvector` running locally via Docker Compose.
-- **Embeddings**: Local Ollama running `nomic-embed-text` (768-dimensional embeddings, 100% free, no API key).
-- **LLM**: Local Ollama (`llama3.2:3b` or `qwen2.5:7b-instruct`) with optional free cloud fallback (Groq / Gemini free tiers).
-- **Knowledge Base**: Curated transcripts from [`ChatPRD/lennys-podcast-transcripts`](https://github.com/ChatPRD/lennys-podcast-transcripts) (269 Markdown transcripts with YAML frontmatter).
-- **Backend / Orchestration**: FastAPI (Python 3.11+) asynchronous API with SQLAlchemy persistence.
+The entire application runs locally on open-source and free-tier infrastructure. No credit card or paid SaaS subscriptions are required.
+
+| Layer | Technology | Why It's Free | Purpose in System |
+| :--- | :--- | :--- | :--- |
+| **Storage & Vectors** | PostgreSQL 16 + `pgvector` | Open source, runs locally via Docker Compose | Persistent storage for chunks, sessions, messages, and artifacts with HNSW cosine indexing. |
+| **Embeddings** | Ollama (`nomic-embed-text`) | Local open weights, 100% free, no API key | Generates 768-dimensional dense vector embeddings locally on CPU/GPU. |
+| **Primary LLM** | Ollama (`llama3.1:8b` / `llama3.2:3b`) | Local open weights, 100% free, runs offline | Mandatory local inference engine powering conversational Q&A and skill execution. |
+| **Cloud LLM (Toggle)** | Groq (Llama 3.3) / Google Gemini Flash | Genuinely free API tiers (no card required) | Optional toggle for sub-2s cloud inference with automatic fallback to Ollama. |
+| **Knowledge Base** | 269 Lenny's Podcast Transcripts | Open-source GitHub archive | Sourced from `ChatPRD/lennys-podcast-transcripts` with structured frontmatter. |
+| **Backend API** | FastAPI (Python 3.11+) | Open source | Asynchronous REST backend, Pydantic schemas, and structured logging. |
+| **Frontend UI** | React 19 + Vite | Open source | High-performance dual-pane chat and sandboxed workspace. |
+| **Artifact Sandbox** | `<iframe sandbox>` + DOMPurify | Free browser primitives | Three-layer security isolation preventing DOM tampering or data exfiltration. |
+| **Containerization** | Docker Compose | Free / Docker Desktop Community | One-command local deployment with persistent named volumes and healthchecks. |
+
+---
+
+## Transcript Source Attribution & Provenance
+
+The knowledge base is built from the open-source transcript archive maintained at [`ChatPRD/lennys-podcast-transcripts`](https://github.com/ChatPRD/lennys-podcast-transcripts).
+- **Corpus Size**: 269 complete episodes spanning conversations with world-class product, growth, and engineering leaders.
+- **Format**: Structured Markdown with YAML frontmatter containing `title`, `guest`, `date`, and original `source_url`.
+- **Licensing & Usage**: Community-transcribed open archive used solely for educational, evaluation, and non-commercial retrieval demonstration.
+- **Attribution**: Every retrieved chunk preserves original speaker and episode metadata.
 
 ---
 
@@ -449,6 +467,58 @@ See [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) for full step-by-step instructions 
 
 ---
 
+## Troubleshooting Guide
+
+### 1. Port Conflicts (5432, 8000, 80, 5173)
+- **Symptom**: `Error starting userland proxy: listen tcp4 0.0.0.0:5432: bind: address already in use` or port 80/8000.
+- **Cause**: A local PostgreSQL service, another development server, or an existing container is binding to the host port.
+- **Remediation**:
+  - Check running containers: `docker ps`.
+  - Override host ports in `.env`:
+    ```bash
+    POSTGRES_PORT=5433
+    BACKEND_PORT=8001
+    FRONTEND_PORT=8080
+    ```
+  - Stop local PostgreSQL daemon: `net stop postgresql` (Windows) or `sudo systemctl stop postgresql` (Linux).
+
+### 2. Ollama Connection Issues (`host.docker.internal`)
+- **Symptom**: Backend logs show `httpx.ConnectError` or `/health` returns `ollama: { status: "unreachable" }`.
+- **Cause**: Ollama is not running on the host machine or is not listening on all interfaces.
+- **Remediation**:
+  - Verify Ollama is running on the host: `curl http://localhost:11434`.
+  - On Linux hosts without `host.docker.internal` DNS: Set `DOCKER_OLLAMA_BASE_URL=http://172.17.0.1:11434` in `.env`.
+  - Ensure Ollama accepts connections: Set `OLLAMA_HOST=0.0.0.0:11434` when starting Ollama.
+  - Pull required models:
+    ```bash
+    ollama pull nomic-embed-text
+    ollama pull llama3.1:8b
+    ```
+
+### 3. Windows PowerShell Script Execution Policy
+- **Symptom**: `scripts\run_tests.ps1 cannot be loaded because running scripts is disabled on this system`.
+- **Remediation**:
+  - Run with bypass parameter:
+    ```powershell
+    powershell -ExecutionPolicy Bypass -File .\scripts\run_tests.ps1
+    ```
+  - Or enable for current process:
+    ```powershell
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+    ```
+
+### 4. Database Volume Permissions or Schema Reinitialization
+- **Symptom**: Ingestion errors or missing tables after unclean termination.
+- **Remediation**:
+  - Perform a clean volume restart:
+    ```bash
+    docker compose down -v
+    docker compose up -d
+    ```
+  - The `docker/init.sql` script will automatically re-create extensions and tables on fresh volume creation.
+
+---
+
 ## Project Structure
 
 ```
@@ -459,6 +529,8 @@ lenny-growth-assistant/
 │   │   ├── database.py       # SQLAlchemy engine & session factory
 │   │   ├── models.py         # SQLAlchemy ORM models (sessions, messages, chunks, artifacts)
 │   │   ├── schemas.py        # Pydantic schemas (sessions, messages, rag, artifacts)
+│   │   ├── core/             # Structured JSON logging & custom exceptions
+│   │   ├── middleware/       # TraceMiddleware (X-Request-ID, response latency)
 │   │   ├── routers/
 │   │   │   ├── health.py     # Multi-component /health endpoint
 │   │   │   ├── sessions.py   # Sessions & messages REST endpoints
@@ -471,30 +543,56 @@ lenny-growth-assistant/
 │   │   ├── skills/
 │   │   │   ├── __init__.py   # Skills module exports
 │   │   │   ├── base.py       # BaseSkill abstract interface
-│   │   │   └── ship30.py     # Ship 30 for 30 skill generator & validator
+│   │   │   ├── ship30.py     # Ship 30 for 30 skill generator & validator
+│   │   │   ├── markdown.py   # Markdown executive brief skill
+│   │   │   └── html.py       # Standalone HTML artifact skill with CSP
 │   │   └── main.py           # FastAPI entrypoint, CORS, exception handlers
 │   ├── db/
 │   │   ├── init.sql          # Postgres extension initialization
 │   │   └── schema.sql        # Tables: chunks, sessions, messages, artifacts
-│   ├── tests/
+│   ├── tests/                # 72 comprehensive Pytest tests
 │   │   ├── conftest.py       # Test fixtures and database setup
 │   │   ├── test_health.py    # Multi-component health check tests
 │   │   ├── test_sessions.py  # Session & message persistence tests
+│   │   ├── test_retrieval.py # Cosine ranking & keyword boost tests
+│   │   ├── test_llm_router.py# Provider routing & 429 fallback tests
 │   │   ├── test_chat.py      # Grounded RAG chat endpoint tests
-│   │   └── test_ship30.py    # Ship 30 skill & artifact endpoint tests
-│   ├── Dockerfile            # Backend container definition
+│   │   ├── test_ship30.py    # Ship 30 skill & word count tests
+│   │   ├── test_artifacts.py # Markdown/HTML generation & CSP injection tests
+│   │   └── test_resilience.py# 503 error envelopes & JSON logging tests
+│   ├── Dockerfile            # Multi-stage non-root container definition
 │   └── requirements.txt      # Backend pinned dependencies
-├── frontend/                 # React UI (Phase 7)
+├── frontend/
+│   ├── src/
+│   │   ├── api/              # Axios/Fetch API client modules
+│   │   ├── components/       # Chat, Sidebar, ArtifactViewer, Layout components
+│   │   ├── context/          # ChatContext & ConfigContext state management
+│   │   ├── utils/            # DOMPurify HTML sanitization routines
+│   │   └── tests/            # 33 Vitest / RTL component & security tests
+│   │       ├── ChatFlow.test.tsx
+│   │       ├── SessionList.test.tsx
+│   │       ├── ArtifactViewer.test.tsx
+│   │       ├── SandboxSecurity.test.tsx
+│   │       └── ModelBadge.test.tsx
+│   ├── Dockerfile            # Multi-stage Node builder + Nginx Alpine runtime
+│   ├── nginx.conf            # Reverse proxy & SPA routing configuration
+│   └── package.json          # React 19, Vite, Vitest dependencies
+├── docker/
+│   └── init.sql              # Combined schema & extensions initialization
+├── docs/
+│   └── TEST_PLAN.md          # Evaluator manual verification guide
 ├── scripts/
 │   ├── chunker.py            # Token-aware speaker & heading chunker
-│   └── ingest.py             # Transcript parser, embedder, and upsert script
+│   ├── ingest.py             # Transcript parser, embedder, and upsert script
+│   ├── run_tests.ps1         # Windows single-command test runner
+│   └── run_tests.sh          # Linux/macOS single-command test runner
 ├── tests/
 │   ├── test_chunker.py       # Chunk size & overlap tests
 │   └── test_ingest.py        # Idempotency and parsing tests
-├── agent-transcripts/        # Verifiable agent session logs per phase
+├── agent-transcripts/        # Verifiable agent session logs per phase (1–11)
 ├── data/
 │   └── raw/                  # Downloaded raw transcripts (gitignored)
-├── docker-compose.yml        # Multi-container orchestration (postgres, backend)
+├── docker-compose.yml        # Multi-container orchestration (postgres, backend, frontend, ingest)
 ├── .env.example              # Sample environment configuration
 ├── requirements.txt          # Root Python dependencies
 ├── pyproject.toml            # Project metadata and tool configuration
