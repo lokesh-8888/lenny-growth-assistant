@@ -26,58 +26,109 @@ A local-first, zero-cost AI Growth and Product Assistant grounded in 260+ episod
 
 ---
 
-## Quickstart
+## Quickstart (One-Command Docker Compose)
 
-### 1. Configure Environment
-Copy the example environment file:
+The entire Lenny Growth Assistant stack runs with a single command via Docker Compose. No external cloud API keys or manual installations are required.
+
+### 1. Prerequisites
+- **Docker Desktop** installed and running.
+- **Ollama** running locally on host (`http://localhost:11434`) with the embedding model:
+  ```bash
+  ollama pull nomic-embed-text
+  ```
+
+### 2. Configure Environment (Optional)
+Copy the template configuration:
 ```bash
 cp .env.example .env
 ```
-All defaults are configured for seamless local operation out of the box.
+All defaults connect automatically to host Ollama (`http://host.docker.internal:11434`) and local PostgreSQL.
 
-### 2. Start Services via Docker Compose
-Start PostgreSQL (with `pgvector`) and the FastAPI backend:
+### 3. Launch Services
+Start all services in detached mode:
 ```bash
 docker compose up -d
 ```
-- PostgreSQL is available at `localhost:5432`.
-- FastAPI Backend is available at `http://localhost:8000` (interactive Swagger docs at `http://localhost:8000/docs`).
 
-To run only the database service in Docker:
+Compose automatically initializes:
+- **`lenny_postgres`**: PostgreSQL 16 with `pgvector` extension and persistent storage (`postgres_data` named volume).
+- **`lenny_backend`**: FastAPI asynchronous backend running as a secure non-root user (`appuser`, UID 10001) with internal healthchecks.
+- **`lenny_frontend`**: Production React + Vite SPA served via Nginx with reverse-proxying for `/api/` and `/health`, and dual-port exposure.
+
+### 4. Service Endpoints & Verification
+| Service | URL | Notes |
+| :--- | :--- | :--- |
+| **Frontend UI** | `http://localhost` or `http://localhost:5173` | Production React SPA with dual-pane chat & sandboxed artifact viewer |
+| **Nginx Health Proxy** | `http://localhost/health` | Multi-component health check proxied to FastAPI backend |
+| **FastAPI Backend (Direct)** | `http://localhost:8000` | Direct backend API server |
+| **Interactive API Docs** | `http://localhost:8000/docs` | Swagger / OpenAPI 3.1 documentation |
+| **PostgreSQL 16** | `localhost:5432` | Vector database (`postgres` user / `lenny_growth` DB) |
+
+Check container health status:
+```bash
+docker compose ps
+```
+
+Verify the health endpoint:
+```bash
+curl http://localhost/health
+```
+
+### 5. Run Data Ingestion (Docker Container)
+Run the ingestion pipeline in a dedicated batch container without installing local Python dependencies:
+```bash
+# Ingest first 5 episodes (rapid smoke test):
+docker compose run --rm ingest python scripts/ingest.py --limit 5
+
+# Full archive ingestion (only new or changed transcripts):
+docker compose run --rm ingest python scripts/ingest.py --refresh
+```
+
+### 6. Data Persistence & Teardown
+Postgres data and vector embeddings persist across container stops and restarts via the `postgres_data` Docker volume:
+```bash
+# Stop containers (preserves database volume):
+docker compose down
+
+# Stop and delete database volume (fresh start):
+docker compose down -v
+```
+
+---
+
+## Local Development (Outside Docker)
+
+If developing locally on host machine:
+
+### 1. Database
+Start only the PostgreSQL container:
 ```bash
 docker compose up -d postgres
 ```
 
-### 3. Local Backend Development (Standalone)
-If running the backend outside Docker for local iteration:
+### 2. Python Backend
 ```bash
 python -m venv .venv
-# On Windows:
+# Windows:
 .venv\Scripts\activate
-# On macOS/Linux:
+# macOS/Linux:
 source .venv/bin/activate
 
-pip install -r requirements.txt
-
-# Start FastAPI server:
+pip install -r backend/requirements.txt
 uvicorn app.main:app --app-dir backend --reload --port 8000
 ```
 
-### 4. Run Data Ingestion
-
-Execute the ingestion pipeline:
+### 3. Frontend Development
 ```bash
-python scripts/ingest.py
+cd frontend
+npm install
+npm run dev
 ```
 
-#### CLI Options & Flags:
-- `python scripts/ingest.py` — Clones/verifies the transcript archive in `data/raw/` and ingests new or changed files into the database.
-- `python scripts/ingest.py --refresh` — Specifically checks all files and only processes transcripts whose file hashes have changed or are not yet present in the database.
-- `python scripts/ingest.py --limit 5` — Ingests only the first N files (ideal for rapid smoke testing and evaluation).
-- `python scripts/ingest.py --force` — Forces re-processing and re-embedding of all files regardless of stored hashes.
-
-#### Knowledge Base Source
-The transcripts are sourced from [`ChatPRD/lennys-podcast-transcripts`](https://github.com/ChatPRD/lennys-podcast-transcripts). This repository provides 269 complete episodes in structured Markdown with YAML frontmatter (episode title, guest name, source URL, date), making it the highest quality open archive available. If you already have a local copy, set `RAW_DATA_PATH=/path/to/transcripts` in your `.env` file to skip downloading.
+### 4. Host Ingestion Pipeline
+```bash
+python scripts/ingest.py --limit 5
+```
 
 ---
 

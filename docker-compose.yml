@@ -1,4 +1,7 @@
 services:
+  # =============================================================================
+  # PostgreSQL 16 with pgvector extension
+  # =============================================================================
   postgres:
     image: pgvector/pgvector:pg16
     container_name: lenny_postgres
@@ -11,14 +14,16 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-      - ./backend/db/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql:ro
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-lenny_growth}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  # =============================================================================
+  # FastAPI Backend API Service
+  # =============================================================================
   backend:
     build:
       context: ./backend
@@ -32,19 +37,27 @@ services:
       - "${BACKEND_PORT:-8000}:8000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-lenny_growth}
-      OLLAMA_BASE_URL: ${OLLAMA_CONTAINER_URL:-http://host.docker.internal:11434}
+      OLLAMA_BASE_URL: ${DOCKER_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
       LLM_MODEL: ${LLM_MODEL:-llama3.1:8b}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+      CLOUD_LLM_PROVIDER: ${CLOUD_LLM_PROVIDER:-groq}
+      CLOUD_LLM_API_KEY: ${CLOUD_LLM_API_KEY:-}
+      CLOUD_LLM_MODEL: ${CLOUD_LLM_MODEL:-llama-3.3-70b-versatile}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       RAG_TOP_K: ${RAG_TOP_K:-4}
       RAG_SIMILARITY_THRESHOLD: ${RAG_SIMILARITY_THRESHOLD:-0.40}
       RAG_HISTORY_TURNS: ${RAG_HISTORY_TURNS:-6}
       SHIP30_TARGET_WORD_COUNT: ${SHIP30_TARGET_WORD_COUNT:-1250}
       SHIP30_WORD_COUNT_TOLERANCE: ${SHIP30_WORD_COUNT_TOLERANCE:-0.20}
-      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173","http://127.0.0.1:5173"]}
-      APP_ENV: ${APP_ENV:-development}
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173","http://127.0.0.1:5173","http://localhost"]}
+      APP_ENV: ${APP_ENV:-production}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+    volumes:
+      - ./data:/app/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -52,6 +65,55 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 5s
+
+  # =============================================================================
+  # React Nginx Frontend & Reverse Proxy
+  # =============================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lenny_frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+      - "5173:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # =============================================================================
+  # Ingestion Profile (One-off batch pipeline: docker compose run ingest)
+  # =============================================================================
+  ingest:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lenny_ingest
+    profiles:
+      - ingest
+    command: ["python", "scripts/ingest.py"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-lenny_growth}
+      OLLAMA_BASE_URL: ${DOCKER_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+      RAW_DATA_PATH: ${RAW_DATA_PATH:-data/raw/lennys-podcast-transcripts}
+      TRANSCRIPT_REPO_URL: ${TRANSCRIPT_REPO_URL:-https://github.com/ChatPRD/lennys-podcast-transcripts.git}
+    volumes:
+      - ./data:/app/data
+      - ./scripts:/app/scripts:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   postgres_data:
