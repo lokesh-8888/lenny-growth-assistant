@@ -42,8 +42,22 @@ class Settings(BaseSettings):
 
     # RAG Retrieval Settings
     rag_top_k: int = 4
+    top_k_chunks: Optional[int] = None
     rag_similarity_threshold: float = 0.40
+    similarity_threshold: Optional[float] = None
     rag_history_turns: int = 6
+
+    @property
+    def effective_top_k(self) -> int:
+        return self.top_k_chunks if self.top_k_chunks is not None else self.rag_top_k
+
+    @property
+    def effective_similarity_threshold(self) -> float:
+        return (
+            self.similarity_threshold
+            if self.similarity_threshold is not None
+            else self.rag_similarity_threshold
+        )
 
     # Server & Security
     backend_port: int = 8000

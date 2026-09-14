@@ -13,7 +13,9 @@ class RetrievedChunk(BaseModel):
     episode_title: Optional[str] = None
     guest: Optional[str] = None
     source_url: Optional[str] = None
+    content_hash: Optional[str] = None
     similarity: float = 0.0
+    distance: float = 1.0
 
 
 class Citation(BaseModel):
@@ -28,6 +30,7 @@ class ChatRequest(BaseModel):
         description="Optional session UUID. If omitted, a new session is created.",
     )
     message: str = Field(..., min_length=1, description="User question or prompt")
+    stream: bool = Field(default=False, description="Streaming toggle (reserved for Phase 7)")
     temperature: Optional[float] = Field(
         default=0.7, ge=0.0, le=2.0, description="Sampling temperature"
     )
@@ -40,4 +43,5 @@ class ChatResponse(BaseModel):
     content: str
     citations: List[Citation] = Field(default_factory=list)
     served_by: str
-    is_grounded: bool
+    latency_ms: Optional[float] = None
+    is_grounded: bool = True

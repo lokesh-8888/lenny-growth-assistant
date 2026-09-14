@@ -129,6 +129,27 @@ backend/tests/test_sessions.py::test_invalid_message_role PASSED         [100%]
 ======================== 40 passed, 1 warning in 2.98s ========================
 ```
 
+Targeted RAG & Retrieval Suite executed:
+```bash
+pytest -v backend/tests/test_chat.py backend/tests/test_retrieval.py
+```
+
+Output:
+```
+backend/tests/test_chat.py::test_anti_hallucination_refusal PASSED       [ 10%]
+backend/tests/test_chat.py::test_message_persistence_and_citations PASSED [ 20%]
+backend/tests/test_chat.py::test_multi_turn_followup_preserves_context PASSED [ 30%]
+backend/tests/test_chat.py::test_chat_nonexistent_session_returns_404 PASSED [ 40%]
+backend/tests/test_retrieval.py::test_embedder_success PASSED            [ 50%]
+backend/tests/test_retrieval.py::test_embedder_failure PASSED            [ 60%]
+backend/tests/test_retrieval.py::test_keyword_extraction PASSED          [ 70%]
+backend/tests/test_retrieval.py::test_format_context_chunks PASSED       [ 80%]
+backend/tests/test_retrieval.py::test_retrieval_ranking_and_keyword_boost PASSED [ 90%]
+backend/tests/test_retrieval.py::test_anti_hallucination_empty_retrieval_below_threshold PASSED [100%]
+
+======================== 10 passed, 1 warning in 0.61s ========================
+```
+
 ---
 
 ## 4. Live Docker Container End-to-End Verification

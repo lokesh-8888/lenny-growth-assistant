@@ -98,5 +98,6 @@ async def chat_completion(
         content=asst_msg.content,
         citations=rag_result["citations"],
         served_by=asst_msg.served_by or "ollama",
+        latency_ms=rag_result.get("latency_ms"),
         is_grounded=rag_result["is_grounded"],
     )

@@ -43,11 +43,11 @@ class Retriever:
         similarity_threshold: Optional[float] = None,
     ):
         self.embedder = embedder or QueryEmbedder()
-        self.top_k = top_k or settings.rag_top_k
+        self.top_k = top_k or settings.effective_top_k
         self.similarity_threshold = (
             similarity_threshold
             if similarity_threshold is not None
-            else settings.rag_similarity_threshold
+            else settings.effective_similarity_threshold
         )
 
     async def retrieve(
@@ -77,6 +77,8 @@ class Retriever:
                 episode_title,
                 guest,
                 source_url,
+                content_hash,
+                (embedding <=> CAST(:query_vector AS vector)) AS distance,
                 1 - (embedding <=> CAST(:query_vector AS vector)) AS similarity
             FROM chunks
             WHERE embedding IS NOT NULL
@@ -98,8 +100,9 @@ class Retriever:
         candidates: List[RetrievedChunk] = []
 
         for row in rows:
-            chunk_id, content, title, guest, url, base_sim = row
+            chunk_id, content, title, guest, url, chash, dist, base_sim = row
             sim = float(base_sim) if base_sim is not None else 0.0
+            distance_val = float(dist) if dist is not None else (1.0 - sim)
 
             # Boost if guest or title matches query keywords
             boost = 0.0
@@ -122,7 +125,9 @@ class Retriever:
                         episode_title=title or "Lenny's Podcast",
                         guest=guest or "Unknown Guest",
                         source_url=url or "https://www.lennyspodcast.com",
+                        content_hash=chash,
                         similarity=round(total_sim, 4),
+                        distance=round(distance_val, 4),
                     )
                 )
 
