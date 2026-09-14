@@ -589,7 +589,7 @@ lenny-growth-assistant/
 ├── tests/
 │   ├── test_chunker.py       # Chunk size & overlap tests
 │   └── test_ingest.py        # Idempotency and parsing tests
-├── agent-transcripts/        # Verifiable agent session logs per phase (1–11)
+├── agent-transcripts/        # Verifiable agent session logs per phase (0–12)
 ├── data/
 │   └── raw/                  # Downloaded raw transcripts (gitignored)
 ├── docker-compose.yml        # Multi-container orchestration (postgres, backend, frontend, ingest)
