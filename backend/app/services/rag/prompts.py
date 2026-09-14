@@ -23,6 +23,19 @@ CRITICAL OPERATING RULES:
 4. Structure: Deliver tactical, operator-grade advice. Use clear bullet points and bold headers where appropriate.
 """
 
+GROUNDED_SYSTEM_PROMPT = SYSTEM_PROMPT
+
+
+def build_strict_refusal_response(query: str = "") -> str:
+    """Builds a polite, clear refusal when topic is not in transcripts."""
+    if query:
+        return (
+            f"I couldn't find any discussion on '{query}' in Lenny's podcast transcripts archive. "
+            "Please try asking about product strategy, growth loops, activation, pricing, or "
+            "interviews with specific guests featured on the podcast."
+        )
+    return NOT_COVERED_MESSAGE
+
 
 def format_context_chunks(chunks: List[RetrievedChunk]) -> str:
     """Formats retrieved chunks into delimited numbered excerpts with full attribution."""

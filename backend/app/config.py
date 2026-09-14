@@ -13,8 +13,9 @@ class Settings(BaseSettings):
     # Ollama Local Service
     ollama_base_url: str = "http://localhost:11434"
     embedding_model: str = "nomic-embed-text"
-    llm_model: str = "llama3.2:3b"
-    ollama_model: str = "llama3.2:3b"
+    llm_model: str = "llama3.1:8b"
+    ollama_model: str = "llama3.1:8b"
+    ollama_timeout: float = 180.0
 
     # LLM Router Settings
     llm_provider: str = "ollama"  # "ollama" | "cloud"
@@ -40,7 +41,7 @@ class Settings(BaseSettings):
         return None
 
     # RAG Retrieval Settings
-    rag_top_k: int = 6
+    rag_top_k: int = 4
     rag_similarity_threshold: float = 0.40
     rag_history_turns: int = 6
 

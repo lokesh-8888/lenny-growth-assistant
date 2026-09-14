@@ -7,7 +7,11 @@ from sqlalchemy.orm import Session
 
 from app.models import MessageModel
 from app.services.llm.router import LLMRouter, get_llm_router
-from app.services.rag.prompts import NOT_COVERED_MESSAGE, build_rag_messages
+from app.services.rag.prompts import (
+    NOT_COVERED_MESSAGE,
+    build_rag_messages,
+    build_strict_refusal_response,
+)
 from app.services.rag.retriever import Retriever
 from app.services.rag.types import Citation, RetrievedChunk
 
@@ -42,7 +46,7 @@ class RAGEngine:
         # 2. Strict refusal if no relevant excerpts pass the similarity threshold
         if not chunks:
             return {
-                "content": NOT_COVERED_MESSAGE,
+                "content": build_strict_refusal_response(query),
                 "citations": [],
                 "served_by": "system-groundedness",
                 "is_grounded": False,

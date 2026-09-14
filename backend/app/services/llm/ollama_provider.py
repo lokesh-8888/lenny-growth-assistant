@@ -25,11 +25,11 @@ class OllamaProvider(BaseLLMProvider):
         self,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
-        timeout: float = 60.0,
+        timeout: Optional[float] = None,
     ):
         self.base_url = (base_url or settings.ollama_base_url).rstrip("/")
         self.model = model or settings.ollama_model
-        self.timeout = timeout
+        self.timeout = timeout if timeout is not None else settings.ollama_timeout
 
     @property
     def provider_name(self) -> str:

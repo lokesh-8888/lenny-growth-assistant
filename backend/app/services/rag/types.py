@@ -18,8 +18,8 @@ class RetrievedChunk(BaseModel):
 
 class Citation(BaseModel):
     episode_title: str
-    guest: str
-    source_url: str
+    guest: Optional[str] = "Unknown"
+    source_url: Optional[str] = None
 
 
 class ChatRequest(BaseModel):

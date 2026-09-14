@@ -103,13 +103,45 @@ The transcripts are sourced from [`ChatPRD/lennys-podcast-transcripts`](https://
   ```json
   {
     "current_provider": "ollama",
-    "current_model": "llama3.2:3b",
+    "current_model": "llama3.1:8b",
     "fallback_provider": "ollama",
-    "fallback_model": "llama3.2:3b",
+    "fallback_model": "llama3.1:8b",
     "available_providers": ["ollama", "groq", "gemini"],
     "cloud_configured": false
   }
   ```
+
+### Grounded RAG Chat (Phase 4)
+- `POST /api/chat`: Send a question and receive a strictly grounded answer with structured citations:
+  ```json
+  // Request
+  {
+    "session_id": "56077338-9877-4f93-a57e-a942b7f7baf3", // optional
+    "message": "What does Adam Fishman say about building a growth team?",
+    "temperature": 0.7
+  }
+  ```
+  ```json
+  // Response
+  {
+    "session_id": "56077338-9877-4f93-a57e-a942b7f7baf3",
+    "message_id": "0a930f68-3f23-4ea2-b5f0-b0ceb59f55ba",
+    "role": "assistant",
+    "content": "Based on the transcript excerpts, here are the key points Adam Fishman makes...",
+    "citations": [
+      {
+        "episode_title": "How to build a high-performing growth team | Adam Fishman (Patreon, Lyft, Imperfect Foods)",
+        "guest": "Adam Fishman",
+        "source_url": "https://www.lennyspodcast.com/transcript"
+      }
+    ],
+    "served_by": "ollama",
+    "is_grounded": true
+  }
+  ```
+  - **Strict Groundedness Guardrail**: If retrieved transcript similarity falls below threshold or the topic is not covered in Lenny's Podcast archives, the engine guarantees an honest refusal (`"is_grounded": false`, empty citations) rather than hallucinating.
+  - **Multi-turn Context**: Automatically includes recent session messages (up to `RAG_HISTORY_TURNS=6`) so contextual follow-ups ("Can you summarize his 4 points into a list?") work seamlessly.
+  - **Auto-Persistence**: Sessions and both user and assistant messages with citations and provider tracking are automatically persisted to PostgreSQL.
 
 ---
 

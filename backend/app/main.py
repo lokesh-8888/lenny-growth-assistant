@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
-from app.routers import config, health, sessions
+from app.routers import chat, config, health, sessions
 
 app = FastAPI(
     title="The Lenny Growth Assistant API",
@@ -61,6 +61,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 app.include_router(health.router)
 app.include_router(sessions.router)
 app.include_router(config.router)
+app.include_router(chat.router)
 
 
 @app.get("/", tags=["Root"])
