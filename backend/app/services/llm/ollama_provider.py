@@ -55,10 +55,16 @@ class OllamaProvider(BaseLLMProvider):
         messages: Optional[List[Dict[str, str]]] = None,
         temperature: float = 0.7,
         max_tokens: int = 1500,
+        model: Optional[str] = None,
     ) -> LLMResponse:
         """
         Executes chat completion against Ollama /api/chat.
         """
+        target_model = model or self.model
+        # Normalize ollama: prefix if provided (e.g. ollama:llama3.2:3b -> llama3.2:3b)
+        if target_model.startswith("ollama:"):
+            target_model = target_model.split("ollama:", 1)[1]
+
         # Prepare message history
         chat_messages: List[Dict[str, str]] = []
         if messages:
@@ -71,7 +77,7 @@ class OllamaProvider(BaseLLMProvider):
             chat_messages.append({"role": "user", "content": prompt})
 
         payload = {
-            "model": self.model,
+            "model": target_model,
             "messages": chat_messages,
             "stream": False,
             "options": {
@@ -86,6 +92,12 @@ class OllamaProvider(BaseLLMProvider):
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 resp = await client.post(endpoint, json=payload)
+                if resp.status_code == 404 and target_model != "llama3.1:8b":
+                    # If target model (e.g. llama3.2:3b) not pulled, try llama3.1:8b as fallback
+                    payload["model"] = "llama3.1:8b"
+                    resp = await client.post(endpoint, json=payload)
+                    if resp.status_code == 200:
+                        target_model = "llama3.1:8b"
                 if resp.status_code != 200:
                     raise LLMProviderError(
                         f"Ollama returned HTTP {resp.status_code}: {resp.text}"
@@ -111,7 +123,7 @@ class OllamaProvider(BaseLLMProvider):
 
         return LLMResponse(
             content=content,
-            model=self.model,
+            model=target_model,
             provider="ollama",
             served_by="ollama",
             latency_ms=round(duration_ms, 2),

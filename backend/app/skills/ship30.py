@@ -143,12 +143,14 @@ class Ship30Skill(BaseSkill):
         citations: Optional[List[Dict[str, Any]]] = None,
         temperature: float = 0.7,
         auto_refine: bool = True,
+        model: Optional[str] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         """
         Generates a Ship 30 essay grounded in the given transcript context.
         """
         resolved_title = topic or "Tactical Growth Principles from Lenny's Podcast"
+        chosen_model = model or kwargs.get("model")
 
         citations_str = ""
         if citations:
@@ -176,6 +178,7 @@ class Ship30Skill(BaseSkill):
             messages=messages,
             temperature=temperature,
             max_tokens=2500,
+            model=chosen_model,
         )
         content = llm_resp.content.strip()
         served_by = llm_resp.served_by
@@ -185,7 +188,7 @@ class Ship30Skill(BaseSkill):
         if title_match:
             resolved_title = title_match.group(1).strip()
 
-        # 2. Validation Pass
+        # 2. Structural & Length Validation
         validation = self.validate(content)
 
         # 3. Automated Refinement Pass if severe deficiency and auto_refine is enabled
@@ -203,6 +206,7 @@ class Ship30Skill(BaseSkill):
                 messages=refinement_messages,
                 temperature=temperature,
                 max_tokens=3000,
+                model=chosen_model,
             )
             if refined_resp.content.strip():
                 content = refined_resp.content.strip()

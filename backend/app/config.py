@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     # Ollama Local Service
     ollama_base_url: str = "http://localhost:11434"
     embedding_model: str = "nomic-embed-text"
-    llm_model: str = "llama3.1:8b"
-    ollama_model: str = "llama3.1:8b"
+    llm_model: str = "llama3.2:3b"
+    ollama_model: str = "llama3.2:3b"
     ollama_timeout: float = 180.0
 
     # LLM Router Settings
@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     # Specific Provider Key Aliases
     groq_api_key: Optional[str] = None
     gemini_api_key: Optional[str] = None
+    anthropic_api_key: Optional[str] = None
+    openai_api_key: Optional[str] = None
 
     @property
     def resolved_cloud_api_key(self) -> Optional[str]:
@@ -38,6 +40,10 @@ class Settings(BaseSettings):
             return self.groq_api_key
         if self.cloud_llm_provider.lower() == "gemini" and self.gemini_api_key:
             return self.gemini_api_key
+        if self.cloud_llm_provider.lower() == "anthropic" and self.anthropic_api_key:
+            return self.anthropic_api_key
+        if self.cloud_llm_provider.lower() == "openai" and self.openai_api_key:
+            return self.openai_api_key
         return None
 
     # RAG Retrieval Settings

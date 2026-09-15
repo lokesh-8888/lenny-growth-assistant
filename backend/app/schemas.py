@@ -104,6 +104,10 @@ class ArtifactGenerateRequest(BaseModel):
     source_message_id: Optional[UUID] = Field(
         default=None, description="Optional specific message UUID to ground the artifact upon"
     )
+    model: Optional[str] = Field(
+        default=None,
+        description="Requested model identifier, e.g. 'anthropic:claude-3-5-sonnet', 'ollama:llama3.2:3b'",
+    )
 
 
 class StructureValidation(BaseModel):

@@ -77,6 +77,7 @@ async def chat_completion(
         db=db,
         conversation_history=history_records,
         temperature=payload.temperature or 0.7,
+        model=payload.model,
     )
 
     # 5. Persist assistant response with citations and provider info

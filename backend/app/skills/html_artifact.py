@@ -153,12 +153,14 @@ class HtmlArtifactSkill(BaseSkill):
         topic: Optional[str] = None,
         citations: Optional[List[Dict[str, Any]]] = None,
         temperature: float = 0.7,
+        model: Optional[str] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         """
         Generates a standalone interactive HTML artifact with CSP enforcement.
         """
         resolved_title = topic or "Interactive Growth Framework"
+        chosen_model = model or kwargs.get("model")
 
         citations_str = ""
         if citations:
@@ -185,6 +187,7 @@ class HtmlArtifactSkill(BaseSkill):
             messages=messages,
             temperature=temperature,
             max_tokens=2500,
+            model=chosen_model,
         )
         raw_content = llm_resp.content.strip()
 

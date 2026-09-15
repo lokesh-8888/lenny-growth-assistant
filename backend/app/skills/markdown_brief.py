@@ -92,12 +92,14 @@ class MarkdownBriefSkill(BaseSkill):
         topic: Optional[str] = None,
         citations: Optional[List[Dict[str, Any]]] = None,
         temperature: float = 0.7,
+        model: Optional[str] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         """
         Generates a structured Markdown brief grounded in the podcast context.
         """
         resolved_title = topic or "Executive Growth Brief"
+        chosen_model = model or kwargs.get("model")
 
         citations_str = ""
         if citations:
@@ -110,8 +112,8 @@ class MarkdownBriefSkill(BaseSkill):
             f"TOPIC / TITLE: {resolved_title}\n\n"
             f"GROUNDED PODCAST CONTEXT:\n{context}\n"
             f"{citations_str}\n\n"
-            f"INSTRUCTION: Create an executive-grade Markdown Brief / Strategic Teardown grounded strictly in this context. "
-            f"Include an Executive Summary, Strategic Framework, Tactical Checklist, Key Metrics, and Sources."
+            f"INSTRUCTION: Write an authoritative, executive-ready Markdown growth brief based strictly on the provided context. "
+            f"Format with structured Markdown headings, executive summary, bullet points, checklists, bolding, and citations."
         )
 
         messages = [
@@ -123,6 +125,7 @@ class MarkdownBriefSkill(BaseSkill):
             messages=messages,
             temperature=temperature,
             max_tokens=2000,
+            model=chosen_model,
         )
         content = llm_resp.content.strip()
 

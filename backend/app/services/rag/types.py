@@ -38,6 +38,10 @@ class ChatRequest(BaseModel):
     temperature: Optional[float] = Field(
         default=0.7, ge=0.0, le=2.0, description="Sampling temperature"
     )
+    model: Optional[str] = Field(
+        default=None,
+        description="Requested model identifier, e.g. 'anthropic:claude-3-5-sonnet', 'ollama:llama3.2:3b'",
+    )
 
 
 class ChatResponse(BaseModel):

@@ -39,6 +39,7 @@ class RAGAgent:
         db: Session,
         conversation_history: Optional[List[MessageModel]] = None,
         temperature: float = 0.7,
+        model: Optional[str] = None,
     ) -> Dict:
         """
         Executes grounded retrieval and generation.
@@ -85,6 +86,7 @@ class RAGAgent:
         llm_resp = await self.router.complete(
             messages=messages,
             temperature=temperature,
+            model=model,
         )
         llm_latency_ms = round((time.perf_counter() - llm_start) * 1000, 2)
         total_latency_ms = round((time.perf_counter() - start_time) * 1000, 2)

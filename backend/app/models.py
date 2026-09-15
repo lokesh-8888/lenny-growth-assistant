@@ -68,7 +68,7 @@ class MessageModel(Base):
     role = Column(String(20), nullable=False)  # 'user', 'assistant', 'system'
     content = Column(Text, nullable=False)
     citations = Column(JSON().with_variant(JSONB, "postgresql"), nullable=True, default=list)
-    served_by = Column(String(50), nullable=True)  # e.g., 'ollama', 'groq', 'gemini'
+    served_by = Column(String(255), nullable=True)  # e.g., 'ollama', 'groq', 'ollama-fallback (requested: ...)'
     created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
 
     # Relationship

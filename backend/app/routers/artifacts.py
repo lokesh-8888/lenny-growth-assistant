@@ -101,18 +101,21 @@ async def generate_artifact(
             context=context_str,
             topic=topic,
             citations=citations,
+            model=payload.model,
         )
     elif artifact_type == "markdown":
         result = await markdown_skill.generate(
             context=context_str,
             topic=topic,
             citations=citations,
+            model=payload.model,
         )
     elif artifact_type == "html":
         result = await html_skill.generate(
             context=context_str,
             topic=topic,
             citations=citations,
+            model=payload.model,
         )
         # Enforce CSP tag in HTML before persistence
         result["content"] = ensure_csp_in_html(result["content"])

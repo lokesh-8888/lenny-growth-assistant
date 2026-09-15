@@ -9,7 +9,7 @@ from app.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging
 from app.middleware.trace import TraceMiddleware
-from app.routers import artifacts, chat, config, health, sessions
+from app.routers import artifacts, chat, config, health, models, sessions
 
 # Initialize structured logging
 setup_logging()
@@ -44,6 +44,7 @@ register_exception_handlers(app)
 app.include_router(health.router)
 app.include_router(sessions.router)
 app.include_router(config.router)
+app.include_router(models.router)
 app.include_router(chat.router)
 app.include_router(artifacts.router)
 
