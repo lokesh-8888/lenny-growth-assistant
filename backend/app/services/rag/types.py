@@ -12,6 +12,8 @@ class RetrievedChunk(BaseModel):
     content: str
     episode_title: Optional[str] = None
     guest: Optional[str] = None
+    timestamp: Optional[str] = None
+    speaker: Optional[str] = None
     source_url: Optional[str] = None
     content_hash: Optional[str] = None
     similarity: float = 0.0
@@ -25,7 +27,18 @@ class RetrievedChunk(BaseModel):
 class Citation(BaseModel):
     episode_title: str
     guest: Optional[str] = "Unknown"
+    timestamp: Optional[str] = None
+    speaker: Optional[str] = None
     source_url: Optional[str] = None
+    quote: Optional[str] = None
+
+    @property
+    def episode(self) -> str:
+        return self.episode_title
+
+    @property
+    def url(self) -> Optional[str]:
+        return self.source_url
 
 
 class ChatRequest(BaseModel):

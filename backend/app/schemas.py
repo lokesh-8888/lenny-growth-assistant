@@ -76,6 +76,7 @@ class OllamaStatus(BaseModel):
 class CloudLLMStatus(BaseModel):
     provider: Optional[str] = None
     configured: bool = False
+    providers: Dict[str, bool] = Field(default_factory=dict)
 
 
 class DependenciesStatus(BaseModel):

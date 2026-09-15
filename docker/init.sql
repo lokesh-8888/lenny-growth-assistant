@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS chunks (
     embedding vector(768),
     episode_title TEXT,
     guest TEXT,
+    timestamp VARCHAR(50),
+    speaker TEXT,
     source_url TEXT,
     content_hash VARCHAR(64) UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -47,7 +49,7 @@ CREATE TABLE IF NOT EXISTS messages (
     role VARCHAR(20) NOT NULL,
     content TEXT NOT NULL,
     citations JSONB DEFAULT '[]'::jsonb,
-    served_by VARCHAR(50),
+    served_by VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

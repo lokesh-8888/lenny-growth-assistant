@@ -177,7 +177,13 @@ def parse_transcript_file(file_path: Path) -> Tuple[TranscriptMetadata, str]:
             guest = file_path.stem.split("-")[0].replace("_", " ").title()
 
     # Determine source URL
-    url = meta.get("url") or meta.get("source_url") or meta.get("link") or ""
+    url = (
+        meta.get("youtube_url")
+        or meta.get("url")
+        or meta.get("source_url")
+        or meta.get("link")
+        or ""
+    )
     if not url:
         url = f"https://www.lennyspodcast.com/{file_path.stem}"
 
@@ -230,6 +236,8 @@ def upsert_chunk(
     embedding: List[float],
     episode_title: str,
     guest: str,
+    timestamp: str,
+    speaker: str,
     source_url: str,
     content_hash: str,
 ) -> bool:
@@ -241,13 +249,13 @@ def upsert_chunk(
         cur.execute(
             """
             INSERT INTO chunks (
-                content, embedding, episode_title, guest, source_url, content_hash
+                content, embedding, episode_title, guest, timestamp, speaker, source_url, content_hash
             )
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (content_hash) DO NOTHING
             RETURNING id;
             """,
-            (content, embedding, episode_title, guest, source_url, content_hash),
+            (content, embedding, episode_title, guest, timestamp, speaker, source_url, content_hash),
         )
         row = cur.fetchone()
         return row is not None
@@ -350,6 +358,8 @@ def run_ingestion(
                     embedding=embedding,
                     episode_title=chunk.episode_title,
                     guest=chunk.guest,
+                    timestamp=chunk.timestamp,
+                    speaker=chunk.speaker,
                     source_url=chunk.source_url,
                     content_hash=chunk.content_hash,
                 )

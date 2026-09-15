@@ -3,7 +3,7 @@ Unified Model Registry & Catalog for The Lenny Growth Assistant.
 Contains metadata for local and cloud LLMs supported by the router.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from pydantic import BaseModel, Field
 
 from app.config import settings
@@ -20,6 +20,7 @@ class ModelMetadata(BaseModel):
     is_local: bool = Field(default=False, description="Whether the model executes locally via Ollama")
     env_key: Optional[str] = Field(default=None, description="Required environment variable for API access")
     is_available: bool = Field(default=False, description="Whether this model is currently available to serve requests")
+    status: str = Field(default="ready", description="Model availability status: 'ready', 'key_configured', 'key_missing'")
 
 
 DEFAULT_MODEL_ID = "ollama:llama3.2:3b"
@@ -110,12 +111,28 @@ def is_env_key_configured(key_name: Optional[str]) -> bool:
     return bool(val and val.strip())
 
 
+def determine_model_status(is_local: bool, env_key: Optional[str], ollama_available: bool) -> Tuple[bool, str]:
+    """Computes (is_available, status) tuple for a catalog item."""
+    if is_local:
+        available = ollama_available
+        status_val = "ready" if ollama_available else "unreachable"
+    else:
+        configured = is_env_key_configured(env_key)
+        available = configured
+        status_val = "key_configured" if configured else "key_missing"
+    return available, status_val
+
+
 def get_model_metadata(model_id: str, ollama_available: bool = True) -> Optional[ModelMetadata]:
     """Retrieves metadata for a specific model ID."""
     for item in MODEL_CATALOG:
         if item["id"] == model_id:
-            available = ollama_available if item["is_local"] else is_env_key_configured(item["env_key"])
-            return ModelMetadata(**item, is_available=available)
+            available, status_val = determine_model_status(
+                is_local=item["is_local"],
+                env_key=item["env_key"],
+                ollama_available=ollama_available,
+            )
+            return ModelMetadata(**item, is_available=available, status=status_val)
     return None
 
 
@@ -123,6 +140,10 @@ def get_all_models(ollama_available: bool = True) -> List[ModelMetadata]:
     """Returns all models in the catalog with current availability status."""
     models: List[ModelMetadata] = []
     for item in MODEL_CATALOG:
-        available = ollama_available if item["is_local"] else is_env_key_configured(item["env_key"])
-        models.append(ModelMetadata(**item, is_available=available))
+        available, status_val = determine_model_status(
+            is_local=item["is_local"],
+            env_key=item["env_key"],
+            ollama_available=ollama_available,
+        )
+        models.append(ModelMetadata(**item, is_available=available, status=status_val))
     return models

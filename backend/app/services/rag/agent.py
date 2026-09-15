@@ -141,11 +141,15 @@ class RAGAgent:
         for c in chunks:
             if c.episode_title not in seen_titles:
                 seen_titles.add(c.episode_title)
+                quote_text = c.content[:200].strip() if c.content else None
                 citations.append(
                     Citation(
                         episode_title=c.episode_title,
                         guest=c.guest,
+                        timestamp=c.timestamp,
+                        speaker=c.speaker,
                         source_url=c.source_url,
+                        quote=quote_text,
                     )
                 )
 

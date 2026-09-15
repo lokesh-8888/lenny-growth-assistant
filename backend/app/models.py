@@ -102,6 +102,8 @@ class ChunkModel(Base):
     embedding = Column(Vector(768), nullable=True)
     episode_title = Column(Text, nullable=True)
     guest = Column(Text, nullable=True)
+    timestamp = Column(String(50), nullable=True)  # e.g., "14:25" or "00:01:27"
+    speaker = Column(Text, nullable=True)  # e.g., "Brian Chesky", "Lenny"
     source_url = Column(Text, nullable=True)
     content_hash = Column(String(64), unique=True, nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)

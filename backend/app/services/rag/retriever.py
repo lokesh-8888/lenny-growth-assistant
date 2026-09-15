@@ -78,6 +78,8 @@ class Retriever:
                 guest,
                 source_url,
                 content_hash,
+                timestamp,
+                speaker,
                 (embedding <=> CAST(:query_vector AS vector)) AS distance,
                 1 - (embedding <=> CAST(:query_vector AS vector)) AS similarity
             FROM chunks
@@ -100,7 +102,11 @@ class Retriever:
         candidates: List[RetrievedChunk] = []
 
         for row in rows:
-            chunk_id, content, title, guest, url, chash, dist, base_sim = row
+            if len(row) >= 10:
+                chunk_id, content, title, guest, url, chash, chunk_ts, chunk_spk, dist, base_sim = row[:10]
+            else:
+                chunk_id, content, title, guest, url, chash, dist, base_sim = row[:8]
+                chunk_ts, chunk_spk = None, None
             sim = float(base_sim) if base_sim is not None else 0.0
             distance_val = float(dist) if dist is not None else (1.0 - sim)
 
@@ -124,6 +130,8 @@ class Retriever:
                         content=content,
                         episode_title=title or "Lenny's Podcast",
                         guest=guest or "Unknown Guest",
+                        timestamp=chunk_ts,
+                        speaker=chunk_spk,
                         source_url=url or "https://www.lennyspodcast.com",
                         content_hash=chash,
                         similarity=round(total_sim, 4),

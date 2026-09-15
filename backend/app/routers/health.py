@@ -41,12 +41,24 @@ async def check_ollama(base_url: str) -> OllamaStatus:
 
 
 def check_cloud_llm() -> CloudLLMStatus:
-    """Checks if free-tier cloud LLM keys are configured (without making network calls)."""
-    if settings.groq_api_key:
-        return CloudLLMStatus(provider="groq", configured=True)
-    if settings.gemini_api_key:
-        return CloudLLMStatus(provider="gemini", configured=True)
-    return CloudLLMStatus(provider=None, configured=False)
+    """Checks if cloud LLM keys are configured across supported providers (without making network calls)."""
+    providers_map = {
+        "groq": bool(settings.groq_api_key or (settings.cloud_llm_api_key if settings.cloud_llm_provider == "groq" else None)),
+        "gemini": bool(settings.gemini_api_key or (settings.cloud_llm_api_key if settings.cloud_llm_provider == "gemini" else None)),
+        "anthropic": bool(settings.anthropic_api_key or (settings.cloud_llm_api_key if settings.cloud_llm_provider == "anthropic" else None)),
+        "openai": bool(settings.openai_api_key or (settings.cloud_llm_api_key if settings.cloud_llm_provider == "openai" else None)),
+    }
+    configured = any(providers_map.values())
+    primary_configured = None
+    for p in ("groq", "gemini", "anthropic", "openai"):
+        if providers_map[p]:
+            primary_configured = p
+            break
+    return CloudLLMStatus(
+        provider=primary_configured,
+        configured=configured,
+        providers=providers_map,
+    )
 
 
 @router.get(
