@@ -20,6 +20,10 @@ export interface CitationItem {
   guest?: string;
   episode_title?: string;
   source_url?: string;
+  timestamp?: string;
+  speaker?: string;
+  quote?: string;
+  quote_snippet?: string;
 }
 
 export interface MessageItem {

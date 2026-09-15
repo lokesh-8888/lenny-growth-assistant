@@ -946,9 +946,37 @@
   gap: 0.5rem;
 }
 
+.citation-guest-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.citation-mic-icon {
+  font-size: 0.75rem;
+}
+
 .citation-guest {
   font-weight: 600;
   color: var(--slate-200);
+}
+
+.citation-timestamp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  color: #4ade80;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.68rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+}
+
+.ts-clock-icon {
+  color: #4ade80;
 }
 
 .citation-link {
@@ -965,8 +993,34 @@
 }
 
 .citation-episode {
-  color: var(--slate-500);
+  color: var(--slate-400);
   font-size: 0.72rem;
+  padding-left: 1.1rem;
+}
+
+.citation-quote-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  padding: 0.35rem 0.55rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid var(--moss-500);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.70rem;
+  color: var(--slate-300);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.quote-glyph {
+  color: var(--moss-400);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.citation-quote-text {
+  word-break: break-word;
 }
 
 /* Row 2: Artifact Creation Actions (Secondary Row with real spacing) */

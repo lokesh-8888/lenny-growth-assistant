@@ -34,7 +34,7 @@ interface ChatContextValue {
   clearError: () => void;
 }
 
-const ChatContext = createContext<ChatContextValue | undefined>(undefined);
+export const ChatContext = createContext<ChatContextValue | undefined>(undefined);
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sessions, setSessions] = useState<SessionItem[]>([]);
@@ -249,7 +249,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsChatLoading(false);
       }
     },
-    [activeSessionId, isChatLoading]
+    [activeSessionId, isChatLoading, getActiveModelId]
   );
 
   const generateArtifactAction = useCallback(
@@ -298,7 +298,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setGeneratingType(null);
       }
     },
-    [activeSessionId]
+    [activeSessionId, getActiveModelId]
   );
 
   const openArtifact = useCallback((artifact: ArtifactData) => {

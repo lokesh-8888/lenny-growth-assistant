@@ -519,6 +519,67 @@ See [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) for full step-by-step instructions 
 
 ---
 
+## Manual Test Plan
+
+A step-by-step verification checklist for evaluators and operators:
+
+### Test Case 1: One-Command Boot & Healthcheck
+1. Ensure Ollama is running with `ollama run llama3.2:3b` and `nomic-embed-text`.
+2. Run `docker compose up -d`.
+3. Verify all 3 services (`lenny_postgres`, `lenny_backend`, `lenny_frontend`) are healthy:
+   ```bash
+   docker compose ps
+   ```
+4. Access `http://localhost:8000/health` in browser or curl:
+   - Expect HTTP 200 with `"status": "healthy"`, `"postgres": "connected"`, and `"ollama": "running"`.
+5. Access `http://localhost:5173/` or `http://localhost/`:
+   - Expect modern Claude/ChatGPT-style dual-pane UI with dark mode and active green "Healthy" badge.
+
+### Test Case 2: Grounded Q&A & Refusal Verification
+1. In the chat input, ask: *"What are the key competencies of a growth team according to Adam Fishman?"*
+   - Expect a detailed tactical answer attributing insights to Adam Fishman.
+   - Expect citations list showing episode title, guest name, exact timestamp `[00:05:56]`, verbatim quote snippet, and YouTube/transcript link.
+2. Ask an unmentioned topic: *"What are the quantum computing algorithms discussed on the show?"*
+   - Expect an honest refusal:
+     > *"I couldn't find coverage of this topic in the available Lenny's Podcast transcripts."*
+   - Expect 0 citations and no hallucinated claims.
+
+### Test Case 3: Interactive Model Selector & Ollama Fallback
+1. In the header, click the Model Selector dropdown trigger button.
+2. Verify popover displays two sections:
+   - **Local Models**: `Llama 3.2 (3B)` (Fast) and `Llama 3.1 (8B)` (Quality) with checkmarks.
+   - **Cloud APIs**: `Gemini 1.5 Flash`, `Groq Llama 3.3 (70B)`, `Claude 3.5 Sonnet`, `GPT-4o Mini`.
+3. Note warning pill: unconfigured cloud models display `Key missing` with helpful tooltip.
+4. Select `Claude 3.5 Sonnet` (without `ANTHROPIC_API_KEY` set) and send a prompt:
+   - Request completes without throwing an error.
+   - Response message bubble displays `⚠️ Requested Claude 3.5 (Key Missing) — Served via Local Ollama Fallback` amber badge.
+5. Click **"View Provider Status & Fallback Info"** in the dropdown footer:
+   - Modal drawer displays local infrastructure health and credentials telemetry.
+
+### Test Case 4: Ship 30 for 30 Essay Generation
+1. Under any grounded assistant response, click **"Turn into Ship 30 Essay"**.
+2. Watch the right split-pane open automatically with a loading indicator.
+3. Once generated, inspect the essay:
+   - Strong opening hook without throat-clearing.
+   - 3-part narrative progression (Setup $\rightarrow$ Tension $\rightarrow$ Resolution).
+   - Skimmable subheadings (`##`), bullet points, and selective bolding.
+   - Restated takeaway section (`## The One Takeaway`).
+   - Word count displayed in toolbar is within ~10% of 1,250 words (~1,125 to ~1,375 words).
+
+### Test Case 5: Sandboxed Artifact Viewer & Security Isolation
+1. Click **"Interactive Widget"** or generate an HTML artifact.
+2. Inspect the iframe in DevTools:
+   - Verify `sandbox="allow-scripts"` is present.
+   - Verify `allow-same-origin` is **strictly absent**.
+   - Verify `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline';">` is in the `<head>` of `srcdoc`.
+3. In browser console, attempt to access parent from sandbox or run `fetch()`:
+   - Outbound network requests (`fetch`, `XMLHttpRequest`) are blocked by CSP.
+   - Parent storage (`window.parent.localStorage`) and parent cookies (`parent.document.cookie`) are blocked by opaque origin.
+4. Switch between **Rendered View** and **Raw Source** tabs to inspect source code.
+5. Click **Copy** (shows "Copied" checkmark) and **Download** (downloads `.html` or `.md` file).
+
+---
+
 ## Project Structure
 
 ```

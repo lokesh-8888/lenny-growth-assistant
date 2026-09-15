@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { ConfigProvider } from './context/ConfigContext';
 import { ModelProvider } from './context/ModelContext';
 import { ChatProvider, useChat } from './context/ChatContext';
-import { AppHeader } from './components/Layout/AppHeader';
+import { Header } from './components/Layout/Header';
 import { SplitPane } from './components/Layout/SplitPane';
-import { SessionList } from './components/Sidebar/SessionList';
+import { SessionHistory } from './components/Sidebar/SessionHistory';
 import { ModelSelector } from './components/Sidebar/ModelSelector';
 import { ChatContainer } from './components/Chat/ChatContainer';
 import { ArtifactViewer } from './components/ArtifactViewer';
@@ -32,7 +32,7 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className="app-container">
-      <AppHeader
+      <Header
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={toggleSidebar}
         isViewerOpen={isViewerOpen && !!activeArtifact}
@@ -43,7 +43,7 @@ const MainLayout: React.FC = () => {
         <SplitPane
           sidebar={
             <div className="sidebar-inner">
-              <SessionList />
+              <SessionHistory />
               <ModelSelector />
             </div>
           }

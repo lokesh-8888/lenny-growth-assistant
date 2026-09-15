@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArtifactToolbar } from './ArtifactToolbar';
-import type { ViewTab } from './ArtifactToolbar';
+import { ArtifactControls } from './ArtifactControls';
+import type { ViewTab } from './ArtifactControls';
 import { SandboxedIframe } from './SandboxedIframe';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { getArtifact } from '../../api/artifacts';
@@ -88,7 +88,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
       className={`artifact-viewer-root ${isFullscreen ? 'fullscreen-mode' : ''} ${className}`}
       data-testid="artifact-viewer"
     >
-      <ArtifactToolbar
+      <ArtifactControls
         title={artifact.title}
         type={artifact.type}
         wordCount={artifact.word_count}

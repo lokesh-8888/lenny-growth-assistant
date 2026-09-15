@@ -2,7 +2,7 @@
 
 **Project**: The Lenny Growth Assistant  
 **Author**: Forward-Deployed AI Engineering Team  
-**Status**: Production / Complete (Phase 11)  
+**Status**: Production / Complete (Phase 3)  
 **Version**: 1.0.0  
 
 ---
@@ -12,7 +12,7 @@
 **The Lenny Growth Assistant** is designed as an operator-grade workspace for product managers and growth leaders. Rather than mimicking generic consumer chatbots, the interface treats conversations as tactical investigations that yield tangible deliverables.
 
 The design embodies three core tenets:
-1. **Grounded Provenance Over Assertion**: Every factual answer is visually anchored to its source. Citations are not footnotes; they are interactive, expandable proof points displaying guest names, episode titles, and direct links.
+1. **Grounded Provenance Over Assertion**: Every factual answer is visually anchored to its source. Citations are not footnotes; they are interactive, expandable proof points displaying guest names, episode titles, exact audio timestamps (`[14:32]`), verbatim quote snippets, and direct links.
 2. **Conversation $\rightarrow$ Artifact Workflow**: Insights shouldn't stay locked in a scrolling chat history. With a single click, any answer can be converted into an executive brief, a Ship 30/30 essay, or an interactive calculation model.
 3. **Airtight Zero-Trust Security**: Untrusted AI-generated code is rendered with mathematical isolation. The host app and user session remain completely shielded from arbitrary script execution or exfiltration.
 

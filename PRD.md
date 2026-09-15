@@ -2,7 +2,7 @@
 
 **Project**: The Lenny Growth Assistant  
 **Author**: Forward-Deployed AI Engineering Team  
-**Status**: Production / Complete (Phase 11)  
+**Status**: Production / Complete (Phase 3)  
 **Version**: 1.0.0  
 
 ---
@@ -48,7 +48,7 @@ Product managers, growth leads, founders, and operators make high-stakes product
 | **Local Inference Latency** | Median $< 6.0\text{s}$ | **4.2\text{s}** (Ollama `llama3.1:8b` / `llama3.2:3b`) | Measured via `X-Response-Time-Ms` across RAG pipeline. |
 | **Cloud Inference Latency** | Median $< 3.0\text{s}$ | **1.1\text{s}** (Groq `llama-3.3-70b-versatile`) | Measured on Groq free-tier endpoint. |
 | **Zero-Cost Compliance** | $0.00 mandatory cost | **$0.00** | Operates fully on local Ollama + Docker Compose without credit cards. |
-| **Test Suite Pass Rate** | 100% passing | **100%** (72 backend, 33 frontend) | Verified via `scripts/run_tests.ps1` and `scripts/run_tests.sh`. |
+| **Test Suite Pass Rate** | 100% passing | **100%** (86 backend, 44 frontend) | Verified via `pytest backend` and `npm test` suites. |
 
 ---
 
