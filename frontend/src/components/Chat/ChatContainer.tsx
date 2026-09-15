@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useChat } from '../../context/ChatContext';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
-import { Sparkles, AlertCircle, X, Compass, Loader2 } from 'lucide-react';
+import { BookOpen, AlertCircle, X, Compass, Loader2 } from 'lucide-react';
 
 const STARTER_PROMPTS = [
   {
@@ -40,7 +40,7 @@ export const ChatContainer: React.FC = () => {
       {error && (
         <div className="chat-error-banner" data-testid="chat-error-banner">
           <div className="error-content">
-            <AlertCircle size={16} className="error-icon" />
+            <AlertCircle size={15} className="error-icon" />
             <span>{error}</span>
           </div>
           <button onClick={clearError} className="error-dismiss-btn" aria-label="Dismiss error">
@@ -54,17 +54,17 @@ export const ChatContainer: React.FC = () => {
         {messages.length === 0 ? (
           <div className="chat-empty-state" data-testid="chat-empty-state">
             <div className="empty-hero-icon">
-              <Sparkles size={32} />
+              <BookOpen size={24} />
             </div>
             <h2 className="empty-title">What growth challenge are you tackling?</h2>
             <p className="empty-desc">
-              Ask tactical product & growth questions answered exclusively from 260+ interviews with top operators like Adam Fishman, Elena Verna, Brian Balfour, and more.
+              Ask tactical product and growth questions answered exclusively from 260+ interviews with experienced operators like Adam Fishman, Elena Verna, and Brian Balfour.
             </p>
 
             <div className="starter-grid">
               <div className="starter-header">
-                <Compass size={14} />
-                <span>Suggested Operator Queries:</span>
+                <Compass size={13} />
+                <span>Suggested operator questions</span>
               </div>
               <div className="starter-cards">
                 {STARTER_PROMPTS.map((item, idx) => (
@@ -89,8 +89,8 @@ export const ChatContainer: React.FC = () => {
 
             {isChatLoading && (
               <div className="assistant-loading-indicator" data-testid="chat-loading-indicator">
-                <Loader2 size={16} className="spin-icon" />
-                <span>Retrieving podcast excerpts & synthesizing answer...</span>
+                <Loader2 size={15} className="spin-icon" />
+                <span>Consulting transcript archive and assembling cited answer...</span>
               </div>
             )}
           </div>
