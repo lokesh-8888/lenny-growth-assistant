@@ -16,6 +16,7 @@ describe('ModelBadge & Telemetry Transparency Tests', () => {
     session_id: 'sess-1',
     role: 'assistant',
     content: 'According to Lenny Rachitsky, market expansion occurs after retention stabilization.',
+    citations: [],
     created_at: '2026-09-15T00:00:00Z',
   };
 
@@ -63,6 +64,7 @@ describe('ModelBadge & Telemetry Transparency Tests', () => {
       session_id: 'sess-1',
       role: 'user',
       content: 'How do you measure product-market fit?',
+      citations: [],
       served_by: 'llama3.1:8b',
       created_at: '2026-09-15T00:00:00Z',
     };
@@ -77,6 +79,8 @@ describe('ModelBadge & Telemetry Transparency Tests', () => {
     const mockContextValue = {
       config: {
         current_provider: 'ollama-fallback',
+        current_model: 'llama3.1:8b',
+        available_providers: ['ollama', 'groq'],
         ollama_model: 'llama3.1:8b',
         cloud_provider: 'groq',
         cloud_model: 'llama-3.3-70b-versatile',
@@ -86,7 +90,7 @@ describe('ModelBadge & Telemetry Transparency Tests', () => {
         status: 'healthy' as const,
         dependencies: {
           postgres: { status: 'connected', latency_ms: 1.2 },
-          ollama: { status: 'reachable', models_available: ['llama3.1:8b'] },
+          ollama: { status: 'reachable', models_available: 'llama3.1:8b' },
           cloud_llm: { provider: 'groq', configured: true },
         },
       },

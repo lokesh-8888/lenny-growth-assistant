@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { CitationItem } from '../../api/sessions';
-import { BookOpen, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface CitationCardProps {
   citations: CitationItem[];
@@ -21,11 +21,11 @@ export const CitationCard: React.FC<CitationCardProps> = ({ citations }) => {
         aria-expanded={isExpanded}
         title="Toggle grounded transcript citations"
       >
-        <BookOpen size={14} className="citation-book-icon" />
-        <span>
-          {citations.length} Grounded {citations.length === 1 ? 'Source' : 'Sources'} Cited
+        <span className="citation-grounded-indicator" aria-hidden="true" />
+        <span className="citation-count-text">
+          {citations.length} grounded {citations.length === 1 ? 'source' : 'sources'} cited
         </span>
-        {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        {isExpanded ? <ChevronUp size={12} className="chevron-icon" /> : <ChevronDown size={12} className="chevron-icon" />}
       </button>
 
       {isExpanded && (
@@ -43,12 +43,12 @@ export const CitationCard: React.FC<CitationCardProps> = ({ citations }) => {
                     title="View original episode transcript"
                   >
                     <span>Transcript</span>
-                    <ExternalLink size={11} />
+                    <ExternalLink size={10} />
                   </a>
                 )}
               </div>
               <div className="citation-episode" title={c.episode_title}>
-                {c.episode_title || 'Episode Archive'}
+                {c.episode_title || 'Episode archive'}
               </div>
             </div>
           ))}

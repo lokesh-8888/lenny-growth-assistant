@@ -70,9 +70,18 @@ export const ChatInput: React.FC = () => {
         </button>
       </div>
 
-      <div className="chat-input-footer">
-        <span>Press <strong>Enter</strong> to send, <strong>Shift+Enter</strong> for a new line</span>
-        <span className="groundedness-note">100% Grounded in Lenny's Podcast Transcripts</span>
+      <div className="chat-input-footer" data-testid="chat-input-footer">
+        <div className="chat-hints-row">
+          <span className="keyboard-hint">
+            Press <kbd>Enter</kbd> to send, <kbd>Shift+Enter</kbd> for a new line
+          </span>
+        </div>
+        <div className="chat-trust-row">
+          <span className="groundedness-note">
+            <span className="trust-dot" />
+            100% grounded in Lenny's Podcast transcripts
+          </span>
+        </div>
       </div>
     </form>
   );

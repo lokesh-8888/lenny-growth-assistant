@@ -7,7 +7,7 @@ import {
 } from '../api/sessions';
 import type { SessionItem, MessageItem } from '../api/sessions';
 import { sendChatMessage } from '../api/chat';
-import { generateArtifact, getSessionArtifacts } from '../api/artifacts';
+import { generateArtifact, getSessionArtifacts, getArtifact } from '../api/artifacts';
 import type { ArtifactData } from '../components/ArtifactViewer';
 
 interface ChatContextValue {
@@ -86,15 +86,32 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Also fetch any existing artifacts for this session
         const artifacts = await getSessionArtifacts(activeSessionId);
         if (isMounted && artifacts.length > 0 && !activeArtifact) {
-          // Open the most recent artifact if one exists
-          setActiveArtifact({
-            id: artifacts[0].id,
-            session_id: artifacts[0].session_id,
-            type: artifacts[0].type,
-            title: artifacts[0].title,
-            content: '', // content fetched on demand if needed
-            word_count: artifacts[0].word_count,
-          });
+          try {
+            const full = await getArtifact(artifacts[0].id);
+            if (isMounted) {
+              setActiveArtifact({
+                id: full.id,
+                session_id: full.session_id,
+                type: full.type,
+                title: full.title,
+                content: full.content,
+                word_count: full.word_count,
+                citations: full.citations,
+                created_at: full.created_at,
+              });
+            }
+          } catch {
+            if (isMounted) {
+              setActiveArtifact({
+                id: artifacts[0].id,
+                session_id: artifacts[0].session_id,
+                type: artifacts[0].type,
+                title: artifacts[0].title,
+                content: '',
+                word_count: artifacts[0].word_count,
+              });
+            }
+          }
         }
       } catch (err: any) {
         if (isMounted) {

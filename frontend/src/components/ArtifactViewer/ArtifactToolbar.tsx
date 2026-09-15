@@ -63,32 +63,30 @@ export const ArtifactToolbar: React.FC<ArtifactToolbarProps> = ({
   const badge = getTypeBadge();
 
   return (
-    <div className="artifact-toolbar">
-      <div className="toolbar-left">
-        <div className={`artifact-badge ${badge.className}`}>
+    <div className="artifact-toolbar-wrapper" data-testid="artifact-toolbar">
+      {/* Top Document Header */}
+      <div className="artifact-header-identity">
+        <span className={`artifact-badge ${badge.className}`}>
           {badge.icon}
           <span>{badge.label}</span>
-        </div>
+        </span>
         <h3 className="artifact-title" title={title}>
           {title}
         </h3>
-        {wordCount !== undefined && wordCount > 0 && (
-          <span className="artifact-word-count">
-            {wordCount.toLocaleString()} {type === 'html' ? 'words' : 'words'}
-          </span>
-        )}
       </div>
 
-      <div className="toolbar-center">
-        <div className="view-tabs" role="tablist">
+      {/* Main Flex Toolbar with Defined Slots: [tabs] ... [word count] [Isolated Sandbox] [Copy] [Download] [expand] [close] */}
+      <div className="artifact-toolbar">
+        {/* Slot 1: Tabs */}
+        <div className="toolbar-tabs-slot" role="tablist">
           <button
             role="tab"
             aria-selected={activeTab === 'rendered'}
             className={`tab-btn ${activeTab === 'rendered' ? 'active' : ''}`}
             onClick={() => onTabChange('rendered')}
-            title="Switch to Rendered Output"
+            title="Switch to rendered document"
           >
-            <Eye size={15} />
+            <Eye size={13} />
             <span>Rendered</span>
           </button>
           <button
@@ -96,62 +94,78 @@ export const ArtifactToolbar: React.FC<ArtifactToolbarProps> = ({
             aria-selected={activeTab === 'source'}
             className={`tab-btn ${activeTab === 'source' ? 'active' : ''}`}
             onClick={() => onTabChange('source')}
-            title="Switch to Raw Code/Markdown"
+            title="Switch to raw source code"
           >
-            <Code size={15} />
+            <Code size={13} />
             <span>Raw Source</span>
           </button>
         </div>
-      </div>
 
-      <div className="toolbar-right">
-        {type === 'html' && (
-          <div className="sandbox-security-tag" title="Strict CSP 'default-src none' + opaque iframe sandbox active">
-            <ShieldCheck size={14} className="shield-icon" />
-            <span>Isolated Sandbox</span>
-          </div>
-        )}
+        {/* Spacer */}
+        <div className="toolbar-spacer" />
 
-        <button
-          className="toolbar-action-btn"
-          onClick={handleCopyClick}
-          title="Copy raw artifact source"
-          aria-label="Copy source code"
-        >
-          {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
-          <span>{copied ? 'Copied!' : 'Copy'}</span>
-        </button>
+        {/* Action Slots */}
+        <div className="toolbar-actions-slot">
+          {/* Slot 2: Word Count */}
+          {wordCount !== undefined && wordCount > 0 && (
+            <span className="artifact-word-count">
+              {wordCount.toLocaleString()} words
+            </span>
+          )}
 
-        <button
-          className="toolbar-action-btn"
-          onClick={onDownload}
-          title={`Download .${type === 'html' ? 'html' : 'md'}`}
-          aria-label="Download artifact file"
-        >
-          <Download size={16} />
-          <span>Download</span>
-        </button>
+          {/* Slot 3: Isolated Sandbox Badge */}
+          {type === 'html' && (
+            <div className="sandbox-security-tag" title="Strict CSP 'default-src none' + opaque iframe sandbox active">
+              <ShieldCheck size={13} className="shield-icon" />
+              <span>Isolated Sandbox</span>
+            </div>
+          )}
 
-        <button
-          className="toolbar-action-btn icon-only"
-          onClick={onToggleFullscreen}
-          title={isFullscreen ? 'Exit full screen' : 'Expand full screen'}
-          aria-label={isFullscreen ? 'Exit full screen' : 'Full screen'}
-        >
-          {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-        </button>
-
-        {onClose && (
+          {/* Slot 4: Copy Button */}
           <button
-            className="toolbar-action-btn icon-only close-artifact-btn"
-            onClick={onClose}
-            title="Close viewer"
-            aria-label="Close artifact viewer"
-            data-testid="close-artifact-btn"
+            className="toolbar-action-btn"
+            onClick={handleCopyClick}
+            title="Copy raw artifact source"
+            aria-label="Copy source code"
           >
-            <X size={16} />
+            {copied ? <Check size={13} className="text-moss" /> : <Copy size={13} />}
+            <span>{copied ? 'Copied' : 'Copy'}</span>
           </button>
-        )}
+
+          {/* Slot 5: Download Button */}
+          <button
+            className="toolbar-action-btn"
+            onClick={onDownload}
+            title={`Download .${type === 'html' ? 'html' : 'md'}`}
+            aria-label="Download artifact file"
+          >
+            <Download size={13} />
+            <span>Download</span>
+          </button>
+
+          {/* Slot 6: Fullscreen Toggle */}
+          <button
+            className="toolbar-action-btn icon-only"
+            onClick={onToggleFullscreen}
+            title={isFullscreen ? 'Exit full screen' : 'Expand full screen'}
+            aria-label={isFullscreen ? 'Exit full screen' : 'Full screen'}
+          >
+            {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+          </button>
+
+          {/* Slot 7: Close Button */}
+          {onClose && (
+            <button
+              className="toolbar-action-btn icon-only close-artifact-btn"
+              onClick={onClose}
+              title="Close viewer"
+              aria-label="Close artifact viewer"
+              data-testid="close-artifact-btn"
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

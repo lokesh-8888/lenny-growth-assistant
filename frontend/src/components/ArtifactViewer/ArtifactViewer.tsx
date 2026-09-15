@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArtifactToolbar } from './ArtifactToolbar';
 import type { ViewTab } from './ArtifactToolbar';
 import { SandboxedIframe } from './SandboxedIframe';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { getArtifact } from '../../api/artifacts';
 import './artifactViewer.css';
 
 export interface ArtifactData {
@@ -31,13 +32,30 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
   className = '',
   onClose,
 }) => {
-
   const [activeTab, setActiveTab] = useState<ViewTab>('rendered');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [content, setContent] = useState<string>(artifact.content || '');
+
+  // Synchronize content or fetch on demand if artifact content was omitted
+  useEffect(() => {
+    if (artifact.content) {
+      setContent(artifact.content);
+    } else if (artifact.id) {
+      getArtifact(artifact.id)
+        .then((full) => {
+          if (full?.content) {
+            setContent(full.content);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load artifact content:', err);
+        });
+    }
+  }, [artifact.id, artifact.content]);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(artifact.content);
+      await navigator.clipboard.writeText(content);
     } catch (err) {
       console.error('Failed to copy artifact content:', err);
     }
@@ -52,7 +70,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-    const blob = new Blob([artifact.content], { type: `${mimeType};charset=utf-8` });
+    const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -85,18 +103,18 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
 
       <div className="artifact-viewport">
         {activeTab === 'rendered' ? (
-          <div className="rendered-panel" data-testid="rendered-panel">
+          <div className="rendered-panel paper-surface" data-testid="rendered-panel">
             {isHtmlType ? (
-              <SandboxedIframe content={artifact.content} title={artifact.title} />
+              <SandboxedIframe content={content} title={artifact.title} />
             ) : (
-              <MarkdownRenderer content={artifact.content} />
+              <MarkdownRenderer content={content} />
             )}
           </div>
         ) : (
           <div className="source-panel" data-testid="source-panel">
             <div className="source-code-container">
               <pre className="source-code-pre">
-                <code>{artifact.content}</code>
+                <code>{content}</code>
               </pre>
             </div>
           </div>
@@ -105,7 +123,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
 
       {artifact.citations && artifact.citations.length > 0 && (
         <div className="artifact-footer-citations">
-          <span className="citations-label">Grounded Sources:</span>
+          <span className="citations-label">Grounded sources:</span>
           <div className="citations-list">
             {artifact.citations.map((c, i) => (
               <span key={i} className="citation-pill" title={c.episode_title}>
