@@ -93,8 +93,12 @@ class RAGAgent:
 
         # 5. Determine if generation was an honest refusal
         refusal_indicators = [
-            "not covered in lenny's podcast",
+            "couldn't find coverage of this topic in the available lenny's podcast transcripts",
+            "could not find coverage of this topic in the available lenny's podcast transcripts",
+            "couldn't find coverage",
             "could not find coverage",
+            "not covered in lenny's podcast",
+            "not covered in the available lenny's podcast transcripts",
             "not covered in the transcripts",
             "not covered in the excerpts",
             "transcripts do not cover",
@@ -146,10 +150,11 @@ class RAGAgent:
                     Citation(
                         episode_title=c.episode_title,
                         guest=c.guest,
-                        timestamp=c.timestamp,
-                        speaker=c.speaker,
+                        timestamp=c.timestamp or "00:00",
+                        speaker=c.speaker or c.guest or "Speaker",
                         source_url=c.source_url,
                         quote=quote_text,
+                        quote_snippet=quote_text,
                     )
                 )
 

@@ -7,7 +7,7 @@ from app.models import MessageModel
 from app.services.rag.types import RetrievedChunk
 
 NOT_COVERED_MESSAGE = (
-    "I could not find coverage of this topic in Lenny's podcast transcripts archive. "
+    "I couldn't find coverage of this topic in the available Lenny's Podcast transcripts. "
     "Please try asking about product strategy, growth loops, activation, pricing, or "
     "interviews with specific guests featured on the podcast."
 )
@@ -17,9 +17,9 @@ SYSTEM_PROMPT = """You are The Lenny Growth Assistant, a battle-tested product m
 CRITICAL OPERATING RULES:
 1. Groundedness: Base your answer ONLY and STRICTLY on the provided transcript excerpts below.
 2. Honest Refusal: If the provided excerpts do not contain sufficient evidence to answer the question, or if the topic is not covered in Lenny's podcast transcripts, respond honestly with:
-   "I could not find coverage of this topic in Lenny's podcast transcripts archive."
+   "I couldn't find coverage of this topic in the available Lenny's Podcast transcripts."
    Do NOT attempt to invent facts, hallucinate frameworks, or answer from general knowledge outside the excerpts.
-3. Citations & Attribution: Whenever citing an insight, metric, or anecdote, explicitly mention the guest's name and the episode context.
+3. Citations & Attribution: Whenever citing an insight, metric, or anecdote, explicitly mention the guest's name, episode title, and timestamp context if available.
 4. Structure: Deliver tactical, operator-grade advice. Use clear bullet points and bold headers where appropriate.
 """
 
@@ -30,7 +30,8 @@ def build_strict_refusal_response(query: str = "") -> str:
     """Builds a polite, clear refusal when topic is not in transcripts."""
     if query:
         return (
-            f"I couldn't find any discussion on '{query}' in Lenny's podcast transcripts archive. "
+            f"I couldn't find coverage of this topic in the available Lenny's Podcast transcripts. "
+            f"Specifically, I couldn't find any discussion on '{query}' in Lenny's podcast transcripts archive. "
             "Please try asking about product strategy, growth loops, activation, pricing, or "
             "interviews with specific guests featured on the podcast."
         )
@@ -38,13 +39,15 @@ def build_strict_refusal_response(query: str = "") -> str:
 
 
 def format_context_chunks(chunks: List[RetrievedChunk]) -> str:
-    """Formats retrieved chunks into delimited numbered excerpts with full attribution."""
+    """Formats retrieved chunks into delimited numbered excerpts with full attribution and timestamps."""
     if not chunks:
         return "No relevant transcript excerpts found."
 
     formatted_sections: List[str] = []
     for idx, chunk in enumerate(chunks, 1):
-        header = f"--- Excerpt {idx} | Episode: \"{chunk.episode_title}\" | Guest: {chunk.guest} ---"
+        ts = chunk.timestamp or "00:00"
+        spk = chunk.speaker or chunk.guest or "Speaker"
+        header = f"--- Excerpt {idx} | Episode: \"{chunk.episode_title}\" | Guest: {chunk.guest} | Timestamp: [{ts}] | Speaker: {spk} ---"
         section = f"{header}\n{chunk.content}\n"
         formatted_sections.append(section)
 

@@ -31,6 +31,7 @@ class Citation(BaseModel):
     speaker: Optional[str] = None
     source_url: Optional[str] = None
     quote: Optional[str] = None
+    quote_snippet: Optional[str] = None
 
     @property
     def episode(self) -> str:

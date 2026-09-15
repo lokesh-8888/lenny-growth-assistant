@@ -46,8 +46,8 @@ class Settings(BaseSettings):
             return self.openai_api_key
         return None
 
-    # RAG Retrieval Settings
-    rag_top_k: int = 4
+    # RAG Retrieval Settings (top-k 5-8)
+    rag_top_k: int = 6
     top_k_chunks: Optional[int] = None
     rag_similarity_threshold: float = 0.40
     similarity_threshold: Optional[float] = None
