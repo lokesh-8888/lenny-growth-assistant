@@ -19,7 +19,7 @@ export interface HealthData {
     };
     ollama: {
       status: string;
-      models_available?: string;
+      models_available?: string | string[];
       error?: string | null;
     };
     cloud_llm?: {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ConfigProvider } from './context/ConfigContext';
+import { ModelProvider } from './context/ModelContext';
 import { ChatProvider, useChat } from './context/ChatContext';
 import { AppHeader } from './components/Layout/AppHeader';
 import { SplitPane } from './components/Layout/SplitPane';
@@ -63,9 +64,11 @@ const MainLayout: React.FC = () => {
 export function App() {
   return (
     <ConfigProvider>
-      <ChatProvider>
-        <MainLayout />
-      </ChatProvider>
+      <ModelProvider>
+        <ChatProvider>
+          <MainLayout />
+        </ChatProvider>
+      </ModelProvider>
     </ConfigProvider>
   );
 }

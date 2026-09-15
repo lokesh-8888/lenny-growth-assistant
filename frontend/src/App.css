@@ -1177,3 +1177,55 @@
     display: none;
   }
 }
+
+/* ==========================================================================
+   Message Meta Header & Served Attribution Badges
+   ========================================================================== */
+
+.message-meta-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.message-author {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--slate-300, #CBD5E1);
+}
+
+.message-served-tag {
+  display: inline-flex;
+  align-items: center;
+}
+
+.served-normal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(76, 122, 94, 0.14);
+  border: 1px solid rgba(76, 122, 94, 0.35);
+  color: #68A67E;
+  letter-spacing: 0.01em;
+}
+
+.served-fallback {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 4px;
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #FACC15;
+  letter-spacing: 0.01em;
+}
+

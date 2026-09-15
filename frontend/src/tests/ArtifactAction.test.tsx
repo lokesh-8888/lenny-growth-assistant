@@ -105,12 +105,14 @@ describe('ArtifactAction and Viewer Flow', () => {
     fireEvent.click(screen.getByTestId('generate-ship30-btn'));
 
     await waitFor(() => {
-      expect(artifactsApi.generateArtifact).toHaveBeenCalledWith({
-        session_id: 'session-201',
-        type: 'ship30',
-        title: undefined,
-        source_message_id: 'msg-assist-1',
-      });
+      expect(artifactsApi.generateArtifact).toHaveBeenCalledWith(
+        expect.objectContaining({
+          session_id: 'session-201',
+          type: 'ship30',
+          title: undefined,
+          source_message_id: 'msg-assist-1',
+        })
+      );
       expect(screen.getByTestId('artifact-viewer')).toBeInTheDocument();
     });
 

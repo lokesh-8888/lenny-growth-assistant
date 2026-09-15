@@ -5,6 +5,7 @@ export interface ChatRequestPayload {
   session_id?: string | null;
   message: string;
   temperature?: number;
+  model?: string;
 }
 
 export interface ChatResponseData {
@@ -26,6 +27,7 @@ export async function sendChatMessage(
       session_id: payload.session_id || undefined,
       message: payload.message,
       temperature: payload.temperature ?? 0.7,
+      model: payload.model || undefined,
     }),
   });
 }

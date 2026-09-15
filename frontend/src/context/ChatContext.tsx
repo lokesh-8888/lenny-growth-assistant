@@ -9,6 +9,7 @@ import type { SessionItem, MessageItem } from '../api/sessions';
 import { sendChatMessage } from '../api/chat';
 import { generateArtifact, getSessionArtifacts, getArtifact } from '../api/artifacts';
 import type { ArtifactData } from '../components/ArtifactViewer';
+import { ModelContext } from './ModelContext';
 
 interface ChatContextValue {
   sessions: SessionItem[];
@@ -44,6 +45,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isArtifactGenerating, setIsArtifactGenerating] = useState<boolean>(false);
   const [generatingType, setGeneratingType] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const modelCtx = useContext(ModelContext);
+  const getActiveModelId = useCallback(() => {
+    return modelCtx?.selectedModelId;
+  }, [modelCtx?.selectedModelId]);
 
   // Load initial session list
   const loadSessions = useCallback(async () => {
@@ -212,10 +218,15 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setMessages((prev) => [...prev, tempUserMessage]);
 
       try {
-        const response = await sendChatMessage({
+        const chatPayload: { session_id: string; message: string; model?: string } = {
           session_id: currentSessionId,
           message: content,
-        });
+        };
+        const activeModel = getActiveModelId();
+        if (activeModel) {
+          chatPayload.model = activeModel;
+        }
+        const response = await sendChatMessage(chatPayload);
 
         const assistantMessage: MessageItem = {
           id: response.message_id,
@@ -252,12 +263,23 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setGeneratingType(type);
 
       try {
-        const response = await generateArtifact({
+        const artifactPayload: {
+          session_id: string;
+          type: 'ship30' | 'markdown' | 'html';
+          title?: string;
+          source_message_id?: string;
+          model?: string;
+        } = {
           session_id: activeSessionId,
           type,
           title,
           source_message_id: messageId,
-        });
+        };
+        const activeModel = getActiveModelId();
+        if (activeModel) {
+          artifactPayload.model = activeModel;
+        }
+        const response = await generateArtifact(artifactPayload);
 
         setActiveArtifact({
           id: response.id,

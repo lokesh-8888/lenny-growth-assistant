@@ -1,7 +1,8 @@
 import React from 'react';
 import { useConfig } from '../../context/ConfigContext';
 import { useChat } from '../../context/ChatContext';
-import { Cpu, AlertTriangle, CheckCircle2, XCircle, Menu, Layers } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, XCircle, Menu, Layers } from 'lucide-react';
+import { ModelSelector } from '../ModelSelector';
 
 interface AppHeaderProps {
   isSidebarOpen: boolean;
@@ -16,10 +17,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   isViewerOpen,
   onToggleViewer,
 }) => {
-  const { config, health } = useConfig();
+  const { health } = useConfig();
   const { activeArtifact } = useChat();
-
-  const isFallback = config?.current_provider === 'ollama-fallback';
 
   const getHealthDot = () => {
     const status = health?.status;
@@ -69,21 +68,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       </div>
 
       <div className="header-right">
-        {/* Fallback warning alert pill if cloud failed */}
-        {isFallback ? (
-          <div className="model-pill fallback-alert" data-testid="fallback-telemetry-badge">
-            <AlertTriangle size={13} className="alert-icon" />
-            <span>⚡ Cloud Rate-Limited — Served via Ollama Fallback</span>
-          </div>
-        ) : (
-          <div className="model-pill normal" data-testid="model-telemetry-badge">
-            <Cpu size={13} />
-            <span>
-              {config?.current_provider === 'ollama' ? 'Ollama' : (config?.current_provider || 'Local')}:{' '}
-              <strong>{config?.current_model || 'llama3.1:8b'}</strong>
-            </span>
-          </div>
-        )}
+        {/* Interactive Model Selector Popover */}
+        <ModelSelector />
 
         {/* Health status dot */}
         {getHealthDot()}

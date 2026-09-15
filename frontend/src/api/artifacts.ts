@@ -6,6 +6,7 @@ export interface ArtifactGeneratePayload {
   type: 'ship30' | 'markdown' | 'html' | string;
   title?: string;
   source_message_id?: string;
+  model?: string;
 }
 
 export interface ArtifactResponseData {
