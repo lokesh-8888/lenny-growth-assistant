@@ -1,29 +1,7 @@
 /* ==========================================================================
-   Artifact Viewer — Premium Dark Glassmorphism Styling
+   Artifact Viewer — Warm Paper Surface & Editorial Record Treatment
+   Shift from "Interface" (Ink Dark) to "Document" (Warm Paper #F3EEE3 + Serif)
    ========================================================================== */
-
-:root {
-  --viewer-bg-base: #0b0f19;
-  --viewer-bg-surface: #111827;
-  --viewer-bg-elevated: #1e293b;
-  --viewer-border: rgba(255, 255, 255, 0.08);
-  --viewer-border-active: rgba(56, 189, 248, 0.35);
-  
-  --viewer-text-main: #f8fafc;
-  --viewer-text-muted: #94a3b8;
-  --viewer-text-dim: #64748b;
-  
-  --accent-cyan: #38bdf8;
-  --accent-indigo: #818cf8;
-  --accent-emerald: #34d399;
-  --accent-amber: #fbbf24;
-  
-  --viewer-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  --viewer-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  
-  --viewer-shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-  --viewer-radius: 12px;
-}
 
 /* Container Root */
 .artifact-viewer-root {
@@ -31,15 +9,14 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
-  min-height: 520px;
-  background-color: var(--viewer-bg-surface);
-  border: 1px solid var(--viewer-border);
-  border-radius: var(--viewer-radius);
+  min-height: 480px;
+  background-color: var(--paper-100);
+  border: 1px solid var(--paper-200);
+  border-radius: var(--radius-sm);
   overflow: hidden;
-  box-shadow: var(--viewer-shadow-lg);
-  font-family: var(--viewer-font-sans);
-  color: var(--viewer-text-main);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--paper-ink-900);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  transition: all var(--transition-panel);
 }
 
 .artifact-viewer-root.fullscreen-mode {
@@ -54,48 +31,35 @@
 }
 
 /* ==========================================================================
-   Toolbar Header
+   Artifact Toolbar Header
    ========================================================================== */
 
-.artifact-toolbar {
+.artifact-toolbar-wrapper {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1.25rem;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--viewer-border);
-  gap: 1rem;
+  flex-direction: column;
+  background-color: var(--ink-950);
+  border-bottom: 1px solid var(--border-dark);
   user-select: none;
+  flex-shrink: 0;
 }
 
-.toolbar-left {
+.artifact-header-identity {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  min-width: 0;
-  flex: 1;
+  gap: 0.65rem;
+  padding: 0.65rem 1rem 0.35rem 1rem;
 }
 
 .artifact-title {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: var(--viewer-text-main);
+  color: var(--slate-100);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: -0.01em;
-}
-
-.artifact-word-count {
-  font-size: 0.75rem;
-  color: var(--viewer-text-dim);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 2px 8px;
-  border-radius: 10px;
-  white-space: nowrap;
+  font-family: var(--font-sans);
 }
 
 /* Badges */
@@ -103,148 +67,178 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
+  font-family: var(--font-sans);
 }
 
 .badge-ship30 {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: var(--moss-50);
+  color: var(--moss-400);
+  border: 1px solid var(--moss-border);
 }
 
 .badge-html {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: var(--ink-800);
+  color: var(--slate-300);
+  border: 1px solid var(--border-dark);
 }
 
 .badge-markdown {
-  background: rgba(129, 140, 248, 0.15);
-  color: #818cf8;
-  border: 1px solid rgba(129, 140, 248, 0.3);
+  background: var(--ink-800);
+  color: var(--slate-300);
+  border: 1px solid var(--border-dark);
 }
 
-/* View Tabs */
-.toolbar-center {
+/* Main Defined Slots Toolbar: [tabs] ... [word count] [Isolated Sandbox] [Copy] [Download] [expand] [close] */
+.artifact-toolbar {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 0.35rem 1rem 0.65rem 1rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.view-tabs {
-  display: flex;
+.toolbar-tabs-slot {
+  display: inline-flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 3px;
-  border-radius: 8px;
-  border: 1px solid var(--viewer-border);
+  background: var(--ink-800);
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-dark);
+  gap: 2px;
 }
 
 .tab-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 5px 12px;
-  border-radius: 6px;
+  gap: 0.35rem;
+  padding: 3px 9px;
+  border-radius: 3px;
   border: none;
   background: transparent;
-  color: var(--viewer-text-muted);
-  font-size: 0.8rem;
+  color: var(--slate-400);
+  font-size: 0.74rem;
   font-weight: 500;
+  font-family: var(--font-sans);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-subtle);
 }
 
 .tab-btn:hover {
-  color: var(--viewer-text-main);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--slate-200);
 }
 
 .tab-btn.active {
-  background: var(--viewer-bg-elevated);
-  color: var(--accent-cyan);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  background: var(--ink-700);
+  color: var(--slate-100);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Toolbar Right Actions */
-.toolbar-right {
+.toolbar-spacer {
+  flex: 1;
+  min-width: 0.5rem;
+}
+
+.toolbar-actions-slot {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.artifact-word-count {
+  font-size: 0.7rem;
+  color: var(--slate-500);
+  font-family: var(--font-mono);
+  padding: 2px 6px;
+  background: var(--ink-800);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
 }
 
 .sandbox-security-tag {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.72rem;
+  gap: 0.3rem;
+  font-size: 0.7rem;
   font-weight: 500;
-  color: var(--accent-emerald);
-  background: rgba(52, 211, 153, 0.1);
-  padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(52, 211, 153, 0.25);
+  color: var(--moss-400);
+  background: var(--moss-50);
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--moss-border);
+  font-family: var(--font-sans);
 }
 
 .shield-icon {
-  color: var(--accent-emerald);
+  color: var(--moss-400);
 }
 
 .toolbar-action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--viewer-border);
-  color: var(--viewer-text-muted);
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 0.8rem;
+  background: var(--ink-800);
+  border: 1px solid var(--border-dark);
+  color: var(--slate-300);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+  font-family: var(--font-sans);
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-subtle);
 }
 
 .toolbar-action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--viewer-text-main);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--ink-700);
+  color: var(--slate-100);
+  border-color: var(--border-dark-hover);
 }
 
 .toolbar-action-btn.icon-only {
-  padding: 6px;
+  padding: 5px;
 }
 
-.text-success {
-  color: var(--accent-emerald);
+.text-moss {
+  color: var(--moss-400);
 }
 
 /* ==========================================================================
-   Viewport Panels
+   Viewport Panels (Warm Paper Surface & Editorial Record)
    ========================================================================== */
 
 .artifact-viewport {
   flex: 1;
   overflow: hidden;
   position: relative;
-  background: var(--viewer-bg-base);
+  background: var(--paper-100);
 }
 
-.rendered-panel,
+.rendered-panel {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--paper-100);
+  color: var(--paper-ink-900);
+}
+
 .source-panel {
   width: 100%;
   height: 100%;
   overflow: auto;
+  background: var(--ink-950);
+  color: var(--slate-200);
 }
 
 /* ==========================================================================
-   Sandboxed Iframe
+   Sandboxed Iframe Container (Guaranteed Visible Rendering)
    ========================================================================== */
 
 .sandboxed-iframe-container {
@@ -252,7 +246,8 @@
   height: 100%;
   min-height: 480px;
   position: relative;
-  background: #0f172a;
+  background-color: var(--ink-950);
+  display: flex;
 }
 
 .sandboxed-iframe {
@@ -260,195 +255,177 @@
   height: 100%;
   border: none;
   display: block;
-}
-
-.iframe-loading-indicator {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--viewer-text-dim);
-  font-size: 0.85rem;
-}
-
-.spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid rgba(56, 189, 248, 0.2);
-  border-top-color: var(--accent-cyan);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+  flex: 1;
 }
 
 /* ==========================================================================
-   Markdown Renderer Styling
+   Source Code View
    ========================================================================== */
-
-.markdown-rendered-body {
-  padding: 2.5rem 3rem;
-  max-width: 880px;
-  margin: 0 auto;
-  line-height: 1.75;
-  color: #e2e8f0;
-  font-size: 1rem;
-}
-
-.markdown-content h1,
-.markdown-content h2,
-.markdown-content h3,
-.markdown-content h4 {
-  color: #f8fafc;
-  font-weight: 700;
-  line-height: 1.3;
-  margin-top: 2rem;
-  margin-bottom: 0.85rem;
-  letter-spacing: -0.02em;
-}
-
-.markdown-content h1 {
-  font-size: 1.85rem;
-  border-bottom: 1px solid var(--viewer-border);
-  padding-bottom: 0.5rem;
-  margin-top: 0.5rem;
-  color: #ffffff;
-}
-
-.markdown-content h2 {
-  font-size: 1.45rem;
-  color: var(--accent-cyan);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
-  padding-bottom: 0.4rem;
-}
-
-.markdown-content h3 {
-  font-size: 1.2rem;
-  color: #93c5fd;
-}
-
-.markdown-content p {
-  margin-top: 0;
-  margin-bottom: 1.2rem;
-}
-
-.markdown-content strong {
-  color: #ffffff;
-  font-weight: 650;
-}
-
-.markdown-content ul,
-.markdown-content ol {
-  margin-top: 0;
-  margin-bottom: 1.4rem;
-  padding-left: 1.5rem;
-}
-
-.markdown-content li {
-  margin-bottom: 0.45rem;
-}
-
-.markdown-content blockquote {
-  margin: 1.5rem 0;
-  padding: 0.75rem 1.25rem;
-  border-left: 4px solid var(--accent-cyan);
-  background: rgba(56, 189, 248, 0.08);
-  border-radius: 0 8px 8px 0;
-  color: #cbd5e1;
-}
-
-.markdown-content hr {
-  border: none;
-  border-top: 1px solid var(--viewer-border);
-  margin: 2rem 0;
-}
-
-.markdown-content code {
-  font-family: var(--viewer-font-mono);
-  font-size: 0.88em;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: #f1f5f9;
-}
-
-.markdown-content pre {
-  background: #090d16;
-  border: 1px solid var(--viewer-border);
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  overflow-x: auto;
-  margin: 1.5rem 0;
-}
-
-.markdown-content pre code {
-  background: transparent;
-  padding: 0;
-  font-size: 0.85rem;
-  line-height: 1.6;
-}
-
-/* ==========================================================================
-   Raw Source Panel
-   ========================================================================== */
-
-.source-panel {
-  background: #080c14;
-}
 
 .source-code-container {
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.6;
 }
 
 .source-code-pre {
   margin: 0;
-  font-family: var(--viewer-font-mono);
-  font-size: 0.85rem;
-  line-height: 1.65;
-  color: #94a3b8;
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--slate-200);
+}
+
+.source-code-pre code {
+  font-family: inherit;
 }
 
 /* ==========================================================================
-   Footer Citations
+   Markdown Renderer on Warm Paper Surface (Editorial Serif Record)
    ========================================================================== */
 
+.markdown-rendered-body {
+  padding: 2.5rem 3rem;
+  max-width: 740px;
+  margin: 0 auto;
+  line-height: 1.8;
+  color: var(--paper-ink-900);
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+}
+
+.markdown-rendered-body h1 {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--paper-ink-900);
+  line-height: 1.25;
+  margin: 0 0 1.25rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--paper-200);
+  font-family: var(--font-serif);
+  letter-spacing: -0.015em;
+}
+
+.markdown-rendered-body h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--paper-ink-900);
+  margin: 2rem 0 0.85rem 0;
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+}
+
+.markdown-rendered-body h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--paper-ink-900);
+  margin: 1.5rem 0 0.5rem 0;
+  font-family: var(--font-serif);
+}
+
+.markdown-rendered-body p {
+  margin: 0 0 1.25rem 0;
+  color: var(--paper-ink-700);
+}
+
+.markdown-rendered-body ul,
+.markdown-rendered-body ol {
+  margin: 0.75rem 0 1.25rem 1.5rem;
+  padding: 0;
+  color: var(--paper-ink-700);
+}
+
+.markdown-rendered-body li {
+  margin-bottom: 0.45rem;
+  line-height: 1.7;
+}
+
+.markdown-rendered-body strong {
+  font-weight: 700;
+  color: var(--paper-ink-900);
+}
+
+/* Pull-quote citation on paper */
+.markdown-rendered-body blockquote {
+  margin: 1.5rem 0;
+  padding: 0.85rem 1.25rem;
+  border-left: 3px solid var(--paper-moss);
+  background-color: rgba(76, 122, 94, 0.07);
+  color: var(--paper-ink-700);
+  font-style: italic;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.markdown-rendered-body code {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  background-color: var(--paper-200);
+  color: var(--paper-ink-900);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.markdown-rendered-body pre code {
+  display: block;
+  padding: 1rem 1.25rem;
+  background-color: var(--ink-950);
+  color: var(--slate-100);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* Footnote citations on paper */
 .artifact-footer-citations {
+  padding: 0.75rem 1.25rem;
+  background-color: var(--paper-200);
+  border-top: 1px solid var(--paper-300);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 1.25rem;
-  background: rgba(15, 23, 42, 0.95);
-  border-top: 1px solid var(--viewer-border);
-  font-size: 0.75rem;
-  overflow-x: auto;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .citations-label {
-  color: var(--viewer-text-dim);
+  font-size: 0.72rem;
+  color: var(--paper-ink-600);
   font-weight: 600;
-  white-space: nowrap;
+  font-family: var(--font-sans);
 }
 
 .citations-list {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  overflow-x: auto;
+  gap: 0.45rem;
+  flex-wrap: wrap;
 }
 
 .citation-pill {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--viewer-text-muted);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.72rem;
   padding: 2px 8px;
-  border-radius: 6px;
-  white-space: nowrap;
+  background-color: var(--paper-100);
+  border: 1px solid var(--paper-300);
+  color: var(--paper-ink-700);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
+@media (max-width: 640px) {
+  .markdown-rendered-body {
+    padding: 1.5rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .artifact-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 }
